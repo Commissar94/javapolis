@@ -1,0 +1,41 @@
+﻿spring:
+  datasource:
+    url: jdbc:h2:mem:javapolis;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ''
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+server:
+  port: 8080
+logging:
+  level:
+    root: INFO
+    org.springframework.security: WARN
+    org.springframework.mail: DEBUG
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: your-email@gmail.com  # Замените на ваш email
+    password: your-app-password      # Замените на пароль приложения Gmail
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+    test-connection: false
+
+# Базовый URL приложения
+app:
+  base-url: http://localhost:8080
