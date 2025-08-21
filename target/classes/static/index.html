@@ -214,6 +214,26 @@
             color: #666;
             line-height: 1.6;
         }
+        
+        .feature-card .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .feature-card .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
 
         /* How it works */
         .how-it-works {
@@ -439,6 +459,15 @@
                     <div class="feature-icon">👥</div>
                     <h3>Сообщество</h3>
                     <p>Присоединяйтесь к сообществу единомышленников. Общайтесь, делитесь опытом и работайте над проектами вместе.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📚</div>
+                    <h3>Университет Джаваполиса</h3>
+                    <p>Доступ к подробным лекциям и материалам по Java программированию в Университете Джаваполиса. Изучайте теорию в удобном формате с навигацией по темам.</p>
+                    <a href="/university" class="btn btn-primary mt-3">
+                        <i class="fas fa-graduation-cap"></i>
+                        Перейти в Университет
+                    </a>
                 </div>
             </div>
         </div>

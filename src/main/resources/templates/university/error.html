@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ошибка - Университет Джаваполиса</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            padding: 30px;
+            border-right: 1px solid #e9ecef;
+        }
+
+        .sidebar h3 {
+            color: #495057;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .topic-tree {
+            list-style: none;
+        }
+
+        .topic-tree ul {
+            list-style: none;
+            margin-left: 20px;
+        }
+
+        .topic-item {
+            margin-bottom: 8px;
+        }
+
+        .topic-link {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            text-decoration: none;
+            color: #495057;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .topic-link:hover {
+            background: #e9ecef;
+            color: #667eea;
+            transform: translateX(5px);
+        }
+
+        .topic-link.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .folder-toggle {
+            cursor: pointer;
+            margin-right: 8px;
+            color: #667eea;
+            transition: transform 0.3s ease;
+        }
+
+        .folder-toggle.expanded {
+            transform: rotate(90deg);
+        }
+
+        .folder-icon {
+            color: #ffc107;
+            margin-right: 8px;
+        }
+
+        .file-icon {
+            color: #6c757d;
+            margin-right: 8px;
+        }
+
+        .main-content {
+            padding: 40px;
+            background: white;
+        }
+
+        .error-card {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            border-left: 5px solid #dc3545;
+            box-shadow: 0 10px 30px rgba(220, 53, 69, 0.2);
+        }
+
+        .error-card h2 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #721c24;
+        }
+
+        .error-card p {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .error-icon {
+            font-size: 4rem;
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+
+        .back-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            color: white;
+            text-decoration: none;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                order: 2;
+            }
+            
+            .main-content {
+                order: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 Университет Джаваполиса</h1>
+            <p>Изучайте Java программирование с нашими подробными лекциями</p>
+        </div>
+
+        <div class="content">
+            <div class="sidebar">
+                <h3>📚 Учебные материалы</h3>
+                <ul class="topic-tree" th:with="topics=${topicStructure}">
+                    <li th:each="topic : ${topics}" class="topic-item">
+                        <div th:if="${topic.folder}" class="topic-item">
+                            <div class="topic-link folder-header" th:onclick="toggleFolder(this)" th:data-path="${topic.path}">
+                                <i class="fas fa-chevron-right folder-toggle" th:class="${topic.expanded ? 'fas fa-chevron-down folder-toggle expanded' : 'fas fa-chevron-right folder-toggle'}"></i>
+                                <i class="fas fa-folder folder-icon"></i>
+                                <span th:text="${topic.name}">Название папки</span>
+                            </div>
+                            <ul th:if="${topic.expanded}" class="topic-list">
+                                <li th:each="child : ${topic.children}" class="topic-item">
+                                    <a th:if="${child.file}" th:href="'/university/' + ${child.path.replace('.md', '')}" class="topic-link">
+                                        <i class="fas fa-file-alt file-icon"></i>
+                                        <span th:text="${child.name}">Название файла</span>
+                                    </a>
+                                    <div th:if="${child.folder}" class="topic-item">
+                                        <div class="topic-link folder-header" th:onclick="toggleFolder(this)" th:data-path="${child.path}">
+                                            <i class="fas fa-chevron-right folder-toggle"></i>
+                                            <i class="fas fa-folder folder-icon"></i>
+                                            <span th:text="${child.name}">Название вложенной папки</span>
+                                        </div>
+                                        <ul class="topic-list hidden">
+                                            <li th:each="grandChild : ${child.children}" class="topic-item">
+                                                <a th:if="${grandChild.file}" th:href="'/university/' + ${child.path.replace('.md', '')}" class="topic-link">
+                                                    <i class="fas fa-file-alt file-icon"></i>
+                                                    <span th:text="${grandChild.name}">Название файла</span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                        <a th:if="${topic.file}" th:href="'/university/' + ${topic.path.replace('.md', '')}" class="topic-link">
+                            <i class="fas fa-file-alt file-icon"></i>
+                            <span th:text="${topic.name}">Название файла</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="main-content">
+                <div class="error-card">
+                    <div class="error-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h2>Ошибка!</h2>
+                    <p th:text="${errorMessage}">Лекция не найдена</p>
+                    <a href="/university" class="back-button">
+                        <i class="fas fa-arrow-left"></i> Вернуться к списку лекций
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleFolder(element) {
+            const folderToggle = element.querySelector('.folder-toggle');
+            const topicList = element.nextElementSibling;
+            
+            if (topicList && topicList.classList.contains('topic-list')) {
+                const isHidden = topicList.classList.contains('hidden');
+                
+                if (isHidden) {
+                    topicList.classList.remove('hidden');
+                    folderToggle.classList.add('expanded');
+                } else {
+                    topicList.classList.add('hidden');
+                    folderToggle.classList.remove('expanded');
+                }
+            }
+        }
+
+        // Автоматически раскрываем папки по умолчанию
+        document.addEventListener('DOMContentLoaded', function() {
+            const folderHeaders = document.querySelectorAll('.folder-header');
+            folderHeaders.forEach(header => {
+                const topicList = header.nextElementSibling;
+                if (topicList && topicList.classList.contains('topic-list')) {
+                    topicList.classList.remove('hidden');
+                    const folderToggle = header.querySelector('.folder-toggle');
+                    if (folderToggle) {
+                        folderToggle.classList.add('expanded');
+                    }
+                }
+            });
+        });
+
+        // Функция для навигации к топику (теперь не используется)
+        function navigateToTopic(path) {
+            console.log('navigateToTopic called with:', path);
+            // Теперь используем прямые ссылки
+        }
+    </script>
+</body>
+</html>

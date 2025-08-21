@@ -264,15 +264,15 @@
         </div>
 
         <div class="buildings-grid">
-            <div class="building-card" onclick="enterBuilding('university')">
+            <div class="building-card">
                 <span class="building-icon">🎓</span>
-                <h3 class="building-name">Java Университет</h3>
+                <h3 class="building-name">Университет Джаваполиса</h3>
                 <p class="building-description">
                     Изучайте Java с нуля до профессионала. Интерактивные уроки, 
                     практические задания и сертификация.
                 </p>
                 <span class="building-status status-open">Открыто</span>
-                <button class="enter-btn">Войти в Университет</button>
+                <button class="enter-btn" onclick="enterBuilding('university')">Войти в Университет</button>
             </div>
 
             <div class="building-card" onclick="enterBuilding('library')">
@@ -405,13 +405,18 @@
             // Здесь будет логика входа в здание
             console.log('Вход в здание:', buildingType);
             
-            // Пока что просто показываем уведомление
-            alert(`Добро пожаловать в ${getBuildingName(buildingType)}! 🎉\n\nЭта функция находится в разработке.`);
+            if (buildingType === 'university') {
+                // Для университета перенаправляем на страницу университета
+                window.location.href = '/university';
+            } else {
+                // Пока что просто показываем уведомление для других зданий
+                alert(`Добро пожаловать в ${getBuildingName(buildingType)}! 🎉\n\nЭта функция находится в разработке.`);
+            }
         }
 
         function getBuildingName(buildingType) {
             const buildings = {
-                'university': 'Java Университет',
+                'university': 'Университет Джаваполиса',
                 'library': 'Библиотеку Кода',
                 'workshop': 'Мастерскую Проектов',
                 'arena': 'Арена Соревнований',

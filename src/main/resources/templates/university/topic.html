@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Университет Джаваполиса</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 30px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            padding: 30px;
+            border-right: 1px solid #e9ecef;
+        }
+
+        .sidebar h3 {
+            color: #495057;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .topic-tree {
+            list-style: none;
+        }
+
+        .topic-tree ul {
+            list-style: none;
+            margin-left: 20px;
+        }
+
+        .topic-item {
+            margin-bottom: 8px;
+        }
+
+        .topic-link {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            text-decoration: none;
+            color: #495057;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .topic-link:hover {
+            background: #e9ecef;
+            color: #667eea;
+            transform: translateX(5px);
+        }
+
+        .topic-link.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .folder-toggle {
+            cursor: pointer;
+            margin-right: 8px;
+            color: #667eea;
+            transition: transform 0.3s ease;
+        }
+
+        .folder-toggle.expanded {
+            transform: rotate(90deg);
+        }
+
+        .folder-icon {
+            color: #ffc107;
+            margin-right: 8px;
+        }
+
+        .file-icon {
+            color: #6c757d;
+            margin-right: 8px;
+        }
+
+        .main-content {
+            padding: 40px;
+            background: white;
+        }
+
+        .topic-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .topic-header h2 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .topic-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .topic-content {
+            line-height: 1.8;
+            font-size: 1.1rem;
+        }
+
+        /* Стили для подсказок и уведомлений */
+        .tip, .warning, .info, .success {
+            padding: 20px;
+            border-radius: 10px;
+            margin: 25px 0;
+            position: relative;
+            border-left: 5px solid;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .tip {
+            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+            border-left-color: #ffc107;
+            color: #856404;
+        }
+        
+        .warning {
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            border-left-color: #dc3545;
+            color: #721c24;
+        }
+        
+        .info {
+            background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+            border-left-color: #17a2b8;
+            color: #0c5460;
+        }
+        
+        .success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border-left-color: #28a745;
+            color: #155724;
+        }
+        
+        .tip i, .warning i, .info i, .success i {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        
+        .tip i {
+            color: #ffc107;
+        }
+        
+        .warning i {
+            color: #dc3545;
+        }
+        
+        .info i {
+            color: #17a2b8;
+        }
+        
+        .success i {
+            color: #28a745;
+        }
+
+        /* Стили для таблиц */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        /* Стили для сворачиваемых блоков */
+        .collapsible {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .collapsible-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 18px 20px;
+            cursor: pointer;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .collapsible-header:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+            transform: translateY(-1px);
+        }
+        
+        .collapsible-header::after {
+            content: '▼';
+            font-size: 14px;
+            transition: transform 0.3s ease;
+        }
+        
+        .collapsible-header.expanded::after {
+            transform: rotate(180deg);
+        }
+        
+        .collapsible-content {
+            padding: 25px;
+            display: none;
+            background: white;
+            border-top: 1px solid #dee2e6;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        
+        .collapsible-content.show {
+            display: block;
+            max-height: 1000px; /* Достаточно большое значение */
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                order: 2;
+            }
+            
+            .main-content {
+                order: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 Университет Джаваполиса</h1>
+            <p>Изучайте Java программирование с нашими подробными лекциями</p>
+        </div>
+
+        <div class="content">
+            <div class="sidebar">
+                <h3>📚 Учебные материалы</h3>
+                <ul class="topic-tree" th:with="topics=${topicStructure}">
+                    <li th:each="topic : ${topics}" class="topic-item">
+                        <div th:if="${topic.folder}" class="topic-item">
+                            <div class="topic-link folder-header" th:onclick="toggleFolder(this)" th:data-path="${topic.path}">
+                                <i class="fas fa-chevron-right folder-toggle" th:class="${topic.expanded ? 'fas fa-chevron-down folder-toggle expanded' : 'fas fa-chevron-right folder-toggle'}"></i>
+                                <i class="fas fa-folder folder-icon"></i>
+                                <span th:text="${topic.name}">Название папки</span>
+                            </div>
+                            <ul th:if="${topic.expanded}" class="topic-list">
+                                                                <li th:each="child : ${topic.children}" class="topic-item">
+                                    <a th:if="${child.file}" th:href="'/university/' + ${child.path.replace('.md', '')}"
+                                        th:class="${currentTopic != null and currentTopic.path == child.path ? 'topic-link active' : 'topic-link'}">
+                                        <i class="fas fa-file-alt file-icon"></i>
+                                        <span th:text="${child.name}">Название файла</span>
+                                    </a>
+                                    <div th:if="${child.folder}" class="topic-item">
+                                        <div class="topic-link folder-header" th:onclick="toggleFolder(this)" th:data-path="${child.path}">
+                                            <i class="fas fa-chevron-right folder-toggle"></i>
+                                            <i class="fas fa-folder folder-icon"></i>
+                                            <span th:text="${child.name}">Название вложенной папки</span>
+                                        </div>
+                                        <ul class="topic-list hidden">
+                                                                                        <li th:each="grandChild : ${child.children}" class="topic-item">
+                                                <a th:if="${grandChild.file}" th:href="'/university/' + ${grandChild.path.replace('.md', '')}"
+                                                    th:class="${currentTopic != null and currentTopic.path == grandChild.path ? 'topic-link active' : 'topic-link'}">
+                                                    <i class="fas fa-file-alt file-icon"></i>
+                                                    <span th:text="${grandChild.name}">Название файла</span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                                                <a th:if="${topic.file}" th:href="'/university/' + ${topic.path.replace('.md', '')}"
+                            th:class="${currentTopic != null and currentTopic.path == topic.path ? 'topic-link active' : 'topic-link'}">
+                            <i class="fas fa-file-alt file-icon"></i>
+                            <span th:text="${topic.name}">Название файла</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="main-content">
+                <div class="topic-header">
+                    <h2 th:text="${currentTopic != null ? currentTopic.name : 'Лекция'}">Название лекции</h2>
+                    <p>Изучайте материал в удобном для вас темпе</p>
+                </div>
+
+                <div class="topic-content" th:utext="${topicContent}">
+                    <!-- Здесь будет содержимое лекции -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleFolder(element) {
+            const folderToggle = element.querySelector('.folder-toggle');
+            const topicList = element.nextElementSibling;
+            
+            if (topicList && topicList.classList.contains('topic-list')) {
+                const isHidden = topicList.classList.contains('hidden');
+                
+                if (isHidden) {
+                    topicList.classList.remove('hidden');
+                    folderToggle.classList.add('expanded');
+                } else {
+                    topicList.classList.add('hidden');
+                    folderToggle.classList.remove('expanded');
+                }
+            }
+        }
+
+        // Автоматически раскрываем папки по умолчанию
+        document.addEventListener('DOMContentLoaded', function() {
+            const folderHeaders = document.querySelectorAll('.folder-header');
+            folderHeaders.forEach(header => {
+                const topicList = header.nextElementSibling;
+                if (topicList && topicList.classList.contains('topic-list')) {
+                    topicList.classList.remove('hidden');
+                    const folderToggle = header.querySelector('.folder-toggle');
+                    if (folderToggle) {
+                        folderToggle.classList.add('expanded');
+                    }
+                }
+            });
+        });
+
+        // Обработка сворачиваемых блоков
+        document.addEventListener('DOMContentLoaded', function() {
+            const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+            
+            collapsibleHeaders.forEach(header => {
+                header.addEventListener('click', function() {
+                    const content = this.nextElementSibling;
+                    const isExpanded = this.classList.contains('expanded');
+                    
+                    if (isExpanded) {
+                        this.classList.remove('expanded');
+                        content.classList.remove('show');
+                    } else {
+                        this.classList.add('expanded');
+                        content.classList.add('show');
+                    }
+                });
+            });
+        });
+
+        // Функция для навигации к топику (теперь не используется)
+        function navigateToTopic(path) {
+            console.log('navigateToTopic called with:', path);
+            // Теперь используем прямые ссылки
+        }
+    </script>
+</body>
+</html>
