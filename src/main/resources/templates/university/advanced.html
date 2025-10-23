@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Продвинутый курс — Университет Джаваполиса</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display:flex; align-items:center; justify-content:center; margin:0; }
+        .card { max-width: 720px; background: white; border-radius: 18px; padding: 36px; box-shadow: 0 24px 56px rgba(0,0,0,.18); text-align: center; }
+        .icon { font-size: 56px; margin-bottom: 16px; color: #ff9800; }
+        h1 { margin: 0 0 10px; font-size: 2rem; }
+        p { margin: 8px 0; color: #555; line-height: 1.7; }
+        .chips { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 14px 0 24px; }
+        .chip { padding: 8px 12px; border-radius: 999px; background: rgba(255,152,0,.12); color: #ef6c00; font-weight: 600; font-size: .95rem; }
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 18px; border-radius: 12px; text-decoration: none; font-weight: 600; color: white; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); transition: all .2s ease; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(102,126,234,.35); color: white; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="icon">🚧</div>
+        <h1>Продвинутый курс в разработке</h1>
+        <p>Мы готовим углубленные модули: многопоточность, производительность, профилирование, Spring под капотом, реактивные подходы и многое другое.</p>
+        <div class="chips">
+            <div class="chip">Многопоточность</div>
+            <div class="chip">Коллекции и алгоритмы</div>
+            <div class="chip">JVM & GC</div>
+            <div class="chip">Spring Advanced</div>
+            <div class="chip">Тестирование</div>
+        </div>
+        <a href="/university" class="btn"><i class="fas fa-arrow-left"></i> Вернуться к выбору курса</a>
+    </div>
+</body>
+</html>
+

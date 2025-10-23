@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Выбор курса — Университет Джаваполиса</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; color: #333; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 30px 20px; }
+        .header { text-align: center; color: white; margin-bottom: 40px; }
+        .header h1 { font-size: 3rem; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .header p { font-size: 1.2rem; opacity: 0.9; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+        .card { background: white; border-radius: 20px; padding: 28px; box-shadow: 0 20px 40px rgba(0,0,0,0.1); border: 2px solid #f0f2f5; transition: all .3s ease; }
+        .card:hover { transform: translateY(-6px); border-color: #667eea; box-shadow: 0 25px 50px rgba(102,126,234,.25); }
+        .icon { font-size: 2.2rem; margin-bottom: 14px; }
+        .icon.basic { color: #28a745; }
+        .icon.advanced { color: #ff9800; }
+        .title { font-size: 1.4rem; font-weight: 700; color: #333; margin-bottom: 10px; }
+        .desc { color: #666; margin-bottom: 18px; line-height: 1.6; }
+        .meta { display: flex; gap: 12px; color: #888; font-size: .95rem; margin-bottom: 18px; }
+        .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 18px; border-radius: 12px; text-decoration: none; font-weight: 600; color: white; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); transition: all .2s ease; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(102,126,234,.35); color: white; }
+        .badge { display: inline-block; padding: 6px 10px; border-radius: 10px; font-size: .85rem; font-weight: 700; }
+        .badge.basic { background: rgba(40,167,69,.12); color: #2e7d32; }
+        .badge.advanced { background: rgba(255,152,0,.12); color: #ef6c00; }
+    </style>
+    </head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 Университет Джаваполиса</h1>
+            <p>Выберите курс, с которого хотите начать</p>
+        </div>
+        <div class="grid">
+            <div class="card">
+                <div class="icon basic">📘</div>
+                <div class="title">Базовый курс</div>
+                <div class="desc">Все текущие лекции и материалы собраны здесь. Идеально для старта.</div>
+                <div class="meta">
+                    <span class="badge basic">Начальный уровень</span>
+                    <span>📚 Полная программа</span>
+                </div>
+                <a href="/university/basic" class="btn"><i class="fas fa-arrow-right"></i> Перейти</a>
+            </div>
+            <div class="card">
+                <div class="icon advanced">🚀</div>
+                <div class="title">Продвинутый курс</div>
+                <div class="desc">В разработке. Подпишитесь на обновления и загляните позже.</div>
+                <div class="meta">
+                    <span class="badge advanced">Скоро</span>
+                    <span>🧩 Углубленные темы</span>
+                </div>
+                <a href="/university/advanced" class="btn"><i class="fas fa-hourglass-half"></i> Смотреть заглушку</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

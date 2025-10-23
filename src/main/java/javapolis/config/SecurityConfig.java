@@ -41,6 +41,7 @@ public class SecurityConfig {
             .addFilterBefore(new SessionAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/", "/index.html", "/login.html", "/register.html", "/api/auth/**", "/api/registration/**", "/h2-console/**").permitAll()
+                .requestMatchers("/university/**").permitAll()
                 .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**").permitAll()
                 .requestMatchers("/dashboard.html", "/city.html").authenticated()
                 .anyRequest().permitAll()

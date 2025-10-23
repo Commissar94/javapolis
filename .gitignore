@@ -1,0 +1,5 @@
+/target/
+/.idea/
+/target/classes/
+/target/classes/javapolis/
+/target/classes/javapolis/config/
