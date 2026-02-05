@@ -1,5 +1,20 @@
+# Maven build
 /target/
+
+# IntelliJ IDEA
 /.idea/
-/target/classes/
-/target/classes/javapolis/
-/target/classes/javapolis/config/
+*.iml
+*.ipr
+*.iws
+/out/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# JVM crash logs
+hs_err_pid*
+replay_pid*
