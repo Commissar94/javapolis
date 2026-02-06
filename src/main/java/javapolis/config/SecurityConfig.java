@@ -40,10 +40,11 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .addFilterBefore(new SessionAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/", "/index.html", "/login.html", "/register.html", "/api/auth/**", "/api/registration/**", "/h2-console/**").permitAll()
-                .requestMatchers("/university/**").permitAll()
-                .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**").permitAll()
-                .requestMatchers("/dashboard.html", "/city.html").authenticated()
+                .requestMatchers("/", "/index.html", "/login", "/register", "/api/auth/**", "/api/registration/**", "/h2-console/**").permitAll()
+                .requestMatchers("/university/**", "/api/university/**").permitAll()
+                .requestMatchers("/api/auth/status").permitAll()
+                .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**", "/assets/**").permitAll()
+                .requestMatchers("/dashboard", "/city", "/api/dashboard", "/api/city").authenticated()
                 .anyRequest().permitAll()
             )
             .addFilterAfter(new OncePerRequestFilter() {
@@ -58,14 +59,22 @@ public class SecurityConfig {
             .formLogin(AbstractHttpConfigurer::disable)
             .httpBasic(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.ALWAYS)
+                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 .maximumSessions(1)
                 .and()
                 .sessionFixation().migrateSession()
             )
             .logout(logout -> logout
                 .logoutUrl("/api/auth/logout")
-                .logoutSuccessUrl("/")
+                .logoutSuccessHandler((request, response, authentication) -> {
+                    response.setStatus(HttpServletResponse.SC_OK);
+                    response.setContentType("application/json");
+                    response.getWriter().write("{\"success\":true,\"message\":\"Logout successful\"}");
+                    response.getWriter().flush();
+                })
+                .invalidateHttpSession(true)
+                .clearAuthentication(true)
+                .deleteCookies("JSESSIONID")
                 .permitAll()
             );
         

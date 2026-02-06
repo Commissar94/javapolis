@@ -12,10 +12,12 @@ import org.commonmark.renderer.html.AttributeProviderFactory;
 import org.commonmark.ext.gfm.tables.TablesExtension;
 import java.util.Arrays;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -34,6 +36,7 @@ public class TopicService {
         
         this.renderer = HtmlRenderer.builder()
             .extensions(Arrays.asList(TablesExtension.create()))
+            .escapeHtml(false)
             .attributeProviderFactory(new AttributeProviderFactory() {
                 @Override
                 public AttributeProvider create(AttributeProviderContext context) {
@@ -52,39 +55,47 @@ public class TopicService {
     }
 
     public List<TopicStructure> getTopicStructure() {
+        try {
+            ClassPathResource topicsDir = new ClassPathResource("topics");
+            File root = topicsDir.getFile();
+            return scanDirectory(root, "");
+        } catch (IOException e) {
+            System.err.println("Failed to scan topics directory: " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    private List<TopicStructure> scanDirectory(File directory, String relativePath) {
         List<TopicStructure> result = new ArrayList<>();
+        File[] files = directory.listFiles();
         
-        // Файлы в корневой папке
-        result.add(new TopicStructure("about", "file", "about.md"));
-        result.add(new TopicStructure("primitives", "file", "primitives.md"));
-        result.add(new TopicStructure("literals", "file", "literals.md"));
-        result.add(new TopicStructure("classes", "file", "classes.md"));
-        result.add(new TopicStructure("ide", "file", "ide.md"));
-        result.add(new TopicStructure("Tutorial", "file", "Tutorial.md"));
-        result.add(new TopicStructure("Default-topic", "file", "Default-topic.md"));
+        if (files == null) return result;
+
+        for (File file : files) {
+            String name = file.getName();
+            String currentRelativePath = relativePath.isEmpty() ? name : relativePath + "/" + name;
+            
+            if (file.isDirectory()) {
+                TopicStructure folder = new TopicStructure(name, "folder", currentRelativePath);
+                folder.setChildren(scanDirectory(file, currentRelativePath));
+                // По умолчанию разворачиваем папки
+                folder.setExpanded(true);
+                if (!folder.getChildren().isEmpty()) {
+                    result.add(folder);
+                }
+            } else if (name.endsWith(".md")) {
+                String topicName = name.substring(0, name.length() - 3);
+                result.add(new TopicStructure(topicName, "file", currentRelativePath));
+            }
+        }
         
-        // Папка basics
-        TopicStructure basicsFolder = new TopicStructure("basics", "folder", "basics");
-        basicsFolder.setExpanded(true);
-        basicsFolder.addChild(new TopicStructure("hello-world", "file", "basics/hello-world.md"));
-        basicsFolder.addChild(new TopicStructure("variables", "file", "basics/variables.md"));
-        result.add(basicsFolder);
-        
-        // Папка advanced
-        TopicStructure advancedFolder = new TopicStructure("advanced", "folder", "advanced");
-        advancedFolder.setExpanded(true);
-        advancedFolder.addChild(new TopicStructure("collections", "file", "advanced/collections.md"));
-        result.add(advancedFolder);
-        
-        // Папка Задание 1
-        TopicStructure task1Folder = new TopicStructure("Задание 1", "folder", "Задание 1");
-        task1Folder.setExpanded(true);
-        task1Folder.addChild(new TopicStructure("Task-1", "file", "Задание 1/Task-1.md"));
-        task1Folder.addChild(new TopicStructure("task-2", "file", "Задание 1/task-2.md"));
-        task1Folder.addChild(new TopicStructure("task-3", "file", "Задание 1/task-3.md"));
-        task1Folder.addChild(new TopicStructure("task-4", "file", "Задание 1/task-4.md"));
-        task1Folder.addChild(new TopicStructure("task-5", "file", "Задание 1/task-5.md"));
-        result.add(task1Folder);
+        // Сортируем: сначала папки, потом файлы, по имени
+        result.sort((a, b) -> {
+            if (a.getType().equals(b.getType())) {
+                return a.getName().compareToIgnoreCase(b.getName());
+            }
+            return a.getType().equals("folder") ? -1 : 1;
+        });
         
         return result;
     }
@@ -123,69 +134,144 @@ public class TopicService {
             String html = renderer.render(document);
             
             // Обрабатываем пути к изображениям
-            html = processImagePaths(html);
+            html = processImagePaths(html, topicPath);
             
             return html;
         }
     }
 
-    private String processImagePaths(String html) {
-        html = html.replaceAll("src=\"([^\"]+)\"", "src=\"/images/$1\"");
-        return html;
+    public ClassPathResource getImageResource(String path) {
+        // Сначала пробуем найти в папке topics (относительно топика)
+        ClassPathResource topicsResource = new ClassPathResource("topics/" + path);
+        if (topicsResource.exists()) {
+            return topicsResource;
+        }
+        
+        // Затем пробуем найти в общей папке images
+        ClassPathResource imagesResource = new ClassPathResource("images/" + path);
+        if (imagesResource.exists()) {
+            return imagesResource;
+        }
+
+        // Если путь содержит имя файла, пробуем найти только имя файла в папке images
+        String fileName = path;
+        int lastSlash = path.lastIndexOf('/');
+        if (lastSlash != -1) {
+            fileName = path.substring(lastSlash + 1);
+        }
+        ClassPathResource fileNameResource = new ClassPathResource("images/" + fileName);
+        if (fileNameResource.exists()) {
+            return fileNameResource;
+        }
+        
+        return topicsResource; // Возвращаем несуществующий ресурс из topics по умолчанию
+    }
+    
+    private String processImagePaths(String html, String topicPath) {
+        // Извлекаем директорию из пути к топику
+        String directory = "";
+        int lastSlash = topicPath.lastIndexOf('/');
+        if (lastSlash != -1) {
+            directory = topicPath.substring(0, lastSlash + 1);
+        }
+
+        // Заменяем относительные пути (не начинающиеся с / или http или https)
+        Pattern pattern = Pattern.compile("src=\"(?!(/|http:|https:))([^\"]+)\"");
+        Matcher matcher = pattern.matcher(html);
+        StringBuffer sb = new StringBuffer();
+        while (matcher.find()) {
+            String relativePath = matcher.group(2);
+            String fullPath = directory + relativePath;
+            // Кодируем путь для URL
+            String encodedPath = java.net.URLEncoder.encode(fullPath, StandardCharsets.UTF_8);
+            matcher.appendReplacement(sb, "src=\"/api/university/image?path=" + encodedPath + "\"");
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
     }
     
     private String processStyleTags(String markdown) {
         String result = markdown.replaceAll(
             "\\{style=\"tip\"\\}(.*?)\\{/style\\}",
-            "<div class=\"tip\"><i class=\"fas fa-lightbulb\"></i>$1</div>"
+            "<div class=\"tip\"><i class=\"fas fa-lightbulb\"></i><div class=\"admonition-content\">\n\n$1\n\n</div></div>"
         );
         
         result = result.replaceAll(
             "\\{style=\"note\"\\}(.*?)\\{/style\\}",
-            "<div class=\"tip\"><i class=\"fas fa-lightbulb\"></i>$1</div>"
+            "<div class=\"tip\"><i class=\"fas fa-lightbulb\"></i><div class=\"admonition-content\">\n\n$1\n\n</div></div>"
         );
         
         result = result.replaceAll(
             "\\{style=\"warning\"\\}(.*?)\\{/style\\}",
-            "<div class=\"warning\"><i class=\"fas fa-exclamation-triangle\"></i>$1</div>"
+            "<div class=\"warning\"><i class=\"fas fa-exclamation-triangle\"></i><div class=\"admonition-content\">\n\n$1\n\n</div></div>"
         );
         
         result = result.replaceAll(
             "\\{style=\"info\"\\}(.*?)\\{/style\\}",
-            "<div class=\"info\"><i class=\"fas fa-info-circle\"></i>$1</div>"
+            "<div class=\"info\"><i class=\"fas fa-info-circle\"></i><div class=\"admonition-content\">\n\n$1\n\n</div></div>"
         );
         
         result = result.replaceAll(
             "\\{style=\"success\"\\}(.*?)\\{/style\\}",
-            "<div class=\"success\"><i class=\"fas fa-check-circle\"></i>$1</div>"
+            "<div class=\"success\"><i class=\"fas fa-check-circle\"></i><div class=\"admonition-content\">\n\n$1\n\n</div></div>"
         );
 
         if (result.equals(markdown)) {
-            result = markdown.replaceAll("\\{style=\"tip\"\\}", "<div class=\"tip\"><i class=\"fas fa-lightbulb\"></i>");
-            result = result.replaceAll("\\{/style\\}", "</div>");
-            result = result.replaceAll("\\{style=\"note\"\\}", "<div class=\"tip\"><i class=\"fas fa-lightbulb\"></i>");
-            result = result.replaceAll("\\{style=\"warning\"\\}", "<div class=\"warning\"><i class=\"fas fa-exclamation-triangle\"></i>");
-            result = result.replaceAll("\\{style=\"info\"\\}", "<div class=\"info\"><i class=\"fas fa-info-circle\"></i>");
-            result = result.replaceAll("\\{style=\"success\"\\}", "<div class=\"success\"><i class=\"fas fa-check-circle\"></i>");
+            result = markdown.replaceAll("\\{style=\"tip\"\\}", "<div class=\"tip\"><i class=\"fas fa-lightbulb\"></i><div class=\"admonition-content\">\n\n");
+            result = result.replaceAll("\\{style=\"note\"\\}", "<div class=\"tip\"><i class=\"fas fa-lightbulb\"></i><div class=\"admonition-content\">\n\n");
+            result = result.replaceAll("\\{style=\"warning\"\\}", "<div class=\"warning\"><i class=\"fas fa-exclamation-triangle\"></i><div class=\"admonition-content\">\n\n");
+            result = result.replaceAll("\\{style=\"info\"\\}", "<div class=\"info\"><i class=\"fas fa-info-circle\"></i><div class=\"admonition-content\">\n\n");
+            result = result.replaceAll("\\{style=\"success\"\\}", "<div class=\"success\"><i class=\"fas fa-check-circle\"></i><div class=\"admonition-content\">\n\n");
+            result = result.replaceAll("\\{/style\\}", "\n\n</div></div>");
         }
         return result;
     }
 
-    private String processCollapsibleBlocks(String markdown) {
-        Pattern pattern = Pattern.compile("\\{collapsible=\"true\"\\}(.*?)\\{/collapsible\\}(.*?)\\{/collapsible\\}", Pattern.DOTALL);
-        Matcher matcher = pattern.matcher(markdown);
-
-        StringBuffer result = new StringBuffer();
-        while (matcher.find()) {
-            String header = matcher.group(1).trim();
-            String content = matcher.group(2).trim();
-
-            String replacement = "<div class=\"collapsible\"><div class=\"collapsible-header\">" +
-                               header + "</div><div class=\"collapsible-content\">" +
-                               content + "</div></div>";
-            matcher.appendReplacement(result, Matcher.quoteReplacement(replacement));
-        }
-        matcher.appendTail(result);
-        return result.toString();
+    public String processCollapsibleBlocks(String markdown) {
+        // Ищем блоки {collapsible="true"}...{/collapsible}
+        
+        String result = markdown;
+        boolean found;
+        do {
+            found = false;
+            
+            // Сначала ищем блоки с явным разделением заголовка: 
+            // {collapsible="true"} Header {/collapsible} Body {/collapsible}
+            Pattern p = Pattern.compile("\\{collapsible=\"true\"\\}(.*?)\\{/collapsible\\}(.*?)\\{/collapsible\\}", Pattern.DOTALL);
+            Matcher m = p.matcher(result);
+            if (m.find()) {
+                String header = m.group(1).trim();
+                String body = m.group(2).trim();
+                
+                String replacement = "<div class=\"collapsible\"><div class=\"collapsible-header\">" +
+                                   header + "</div><div class=\"collapsible-content\">" +
+                                   "\n\n" + body + "\n\n" + "</div></div>";
+                result = result.substring(0, m.start()) + replacement + result.substring(m.end());
+                found = true;
+                continue;
+            }
+            
+            // Если не нашли двойной, ищем обычный одиночный (заголовок - первая строка)
+            Pattern p2 = Pattern.compile("\\{collapsible=\"true\"\\}(.*?)\\{/collapsible\\}", Pattern.DOTALL);
+            Matcher m2 = p2.matcher(result);
+            if (m2.find()) {
+                String fullContent = m2.group(1).trim();
+                String header;
+                String body;
+                
+                String[] lines = fullContent.split("\\R", 2);
+                header = lines[0].trim();
+                body = lines.length > 1 ? lines[1].trim() : "";
+                
+                String replacement = "<div class=\"collapsible\"><div class=\"collapsible-header\">" +
+                                   header + "</div><div class=\"collapsible-content\">" +
+                                   "\n\n" + body + "\n\n" + "</div></div>";
+                result = result.substring(0, m2.start()) + replacement + result.substring(m2.end());
+                found = true;
+            }
+            
+        } while (found);
+        
+        return result;
     }
 }

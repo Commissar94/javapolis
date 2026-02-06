@@ -10,6 +10,7 @@ import org.springframework.security.web.authentication.logout.SecurityContextLog
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -73,10 +74,20 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+        System.out.println("🚪 Попытка выхода из системы...");
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null) {
+            System.out.println("Выход пользователя: " + auth.getName());
             new SecurityContextLogoutHandler().logout(request, response, auth);
         }
+        
+        HttpSession session = request.getSession(false);
+        if (session != null) {
+            System.out.println("Инвалидация сессии: " + session.getId());
+            session.invalidate();
+        }
+        
+        SecurityContextHolder.clearContext();
         
         Map<String, Object> responseData = new HashMap<>();
         responseData.put("success", true);
@@ -92,7 +103,7 @@ public class AuthController {
         System.out.println("Текущий контекст: " + (auth != null ? auth.getName() + " (аутентифицирован: " + auth.isAuthenticated() + ")" : "null"));
         
         // Если нет аутентификации в текущем контексте, проверяем сессию
-        if (auth == null || !auth.isAuthenticated()) {
+        if (auth == null || !auth.isAuthenticated() || auth instanceof AnonymousAuthenticationToken) {
             HttpSession session = request.getSession(false);
             if (session != null) {
                 System.out.println("Сессия найдена: " + session.getId());
@@ -113,9 +124,11 @@ public class AuthController {
             }
         }
         
+        boolean isRealUser = auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken);
+        
         Map<String, Object> response = new HashMap<>();
         
-        if (auth != null && auth.isAuthenticated()) {
+        if (isRealUser) {
             response.put("authenticated", true);
             response.put("username", auth.getName());
             response.put("authorities", auth.getAuthorities().stream()
