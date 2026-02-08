@@ -14,7 +14,6 @@
               :key="item.path" 
               :item="item" 
               :current-topic="currentTopic"
-              @load-topic="loadTopic"
             />
           </ul>
         </div>
@@ -23,7 +22,54 @@
         <div class="content-inner">
           <div v-if="currentTopic">
             <h2 class="topic-title">{{ currentTopic.name }}</h2>
+            
+            <!-- Мини-пагинация сверху -->
+            <div v-if="totalPages > 1" class="top-pagination">
+              <div class="page-numbers">
+                <button 
+                  v-for="p in totalPages" 
+                  :key="p" 
+                  class="page-number-btn mini" 
+                  :class="{ 'active': currentPage === p - 1 }"
+                  @click="changePage(p - 1)"
+                >
+                  {{ p }}
+                </button>
+              </div>
+            </div>
+
             <div class="markdown-body" v-html="content"></div>
+            
+            <!-- Пагинация -->
+            <div v-if="totalPages > 1" class="pagination">
+              <button 
+                class="page-btn nav-btn" 
+                :disabled="currentPage === 0" 
+                @click="changePage(currentPage - 1)"
+              >
+                <i class="fas fa-chevron-left"></i>
+              </button>
+              
+              <div class="page-numbers">
+                <button 
+                  v-for="p in totalPages" 
+                  :key="p" 
+                  class="page-number-btn" 
+                  :class="{ 'active': currentPage === p - 1 }"
+                  @click="changePage(p - 1)"
+                >
+                  {{ p }}
+                </button>
+              </div>
+              
+              <button 
+                class="page-btn nav-btn" 
+                :disabled="currentPage === totalPages - 1" 
+                @click="changePage(currentPage + 1)"
+              >
+                <i class="fas fa-chevron-right"></i>
+              </button>
+            </div>
           </div>
           <div v-else class="empty-state">
             <i class="fas fa-book-open"></i>
@@ -36,30 +82,67 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, nextTick, watch } from 'vue'
 import axios from 'axios'
+import { useRoute, useRouter } from 'vue-router'
 import TopicTreeItem from '../components/TopicTreeItem.vue'
+
+const route = useRoute()
+const router = useRouter()
 
 const structure = ref(null)
 const currentTopic = ref(null)
 const content = ref('')
+const currentPage = ref(0)
+const totalPages = ref(1)
 
 onMounted(async () => {
   try {
     const res = await axios.get('/api/university/structure')
     structure.value = res.data
+    
+    // Если в URL уже есть путь к топику, загружаем его
+    const path = route.params.pathMatch
+    if (path) {
+      const page = parseInt(route.query.page) || 0
+      loadTopic(path, page)
+    }
   } catch (e) {
     console.error('Failed to load structure', e)
   }
 })
 
-const loadTopic = async (path) => {
+// Следим за изменением параметров маршрута для поддержки навигации браузера
+watch(() => route.params.pathMatch, (newPath) => {
+  if (newPath) {
+    const page = parseInt(route.query.page) || 0
+    loadTopic(newPath, page)
+  }
+})
+
+watch(() => route.query.page, (newPage) => {
+  const path = route.params.pathMatch
+  if (path) {
+    loadTopic(path, parseInt(newPage) || 0)
+  }
+})
+
+const loadTopic = async (path, page = 0) => {
+  if (!path) return
+  
+  // Приводим путь к строке, если это массив (бывает в pathMatch)
+  const stringPath = Array.isArray(path) ? path.join('/') : path
+  
   try {
     // В API путь ожидается без .md и после /api/university/topic/
-    const cleanPath = path.replace('.md', '')
-    const res = await axios.get(`/api/university/topic/${cleanPath}`)
+    const cleanPath = stringPath.replace('.md', '')
+    const res = await axios.get(`/api/university/topic/${cleanPath}`, {
+      params: { page }
+    })
     currentTopic.value = res.data.currentTopic
     content.value = res.data.content
+    currentPage.value = res.data.currentPage
+    totalPages.value = res.data.totalPages
     
     nextTick(() => {
       // Автоматически раскрываем папки по пути к текущему топику
@@ -71,10 +154,25 @@ const loadTopic = async (path) => {
         window.Prism.highlightAll()
       }
       setupCollapsibles()
+      setupQuizzes()
+      
+      // Скроллим вверх при смене страницы
+      const contentEl = document.querySelector('.content')
+      if (contentEl) contentEl.scrollTop = 0
     })
   } catch (e) {
     console.error('Failed to load topic', e)
   }
+}
+
+const changePage = (newPage) => {
+  const path = route.params.pathMatch
+  const stringPath = Array.isArray(path) ? path.join('/') : (path || '')
+  
+  router.push({
+    path: `/university/${stringPath}`,
+    query: { ...route.query, page: newPage }
+  })
 }
 
 const setupCollapsibles = () => {
@@ -96,6 +194,76 @@ const setupCollapsibles = () => {
         content.style.display = 'none';
         parent.classList.remove('open');
       }
+    };
+  });
+}
+
+const setupQuizzes = () => {
+  const quizzes = document.querySelectorAll('.quiz-block');
+  quizzes.forEach(quiz => {
+    const type = quiz.dataset.type;
+    const options = quiz.querySelectorAll('.quiz-option');
+    const checkBtn = quiz.querySelector('.quiz-check-btn');
+    const feedback = quiz.querySelector('.quiz-feedback');
+    
+    options.forEach(option => {
+      option.onclick = () => {
+        if (quiz.classList.contains('checked')) return;
+        
+        if (type === 'single') {
+          options.forEach(o => o.classList.remove('selected'));
+          option.classList.add('selected');
+        } else {
+          option.classList.toggle('selected');
+        }
+        feedback.style.display = 'none';
+      };
+    });
+    
+    checkBtn.onclick = () => {
+      if (quiz.classList.contains('checked')) {
+        // Сброс
+        quiz.classList.remove('checked');
+        options.forEach(o => {
+          o.classList.remove('selected', 'correct', 'incorrect');
+        });
+        feedback.style.display = 'none';
+        checkBtn.textContent = 'Проверить ответ';
+        return;
+      }
+      
+      const selected = quiz.querySelectorAll('.quiz-option.selected');
+      if (selected.length === 0) {
+        feedback.textContent = 'Пожалуйста, выберите хотя бы один вариант';
+        feedback.className = 'quiz-feedback warning-msg';
+        feedback.style.display = 'block';
+        return;
+      }
+      
+      let allCorrect = true;
+      options.forEach(option => {
+        const isCorrect = option.dataset.correct === 'true';
+        const isSelected = option.classList.contains('selected');
+        
+        if (isCorrect) {
+          option.classList.add('correct');
+          if (!isSelected) allCorrect = false;
+        } else if (isSelected) {
+          option.classList.add('incorrect');
+          allCorrect = false;
+        }
+      });
+      
+      quiz.classList.add('checked');
+      if (allCorrect) {
+        feedback.textContent = 'Верно! Отличная работа.';
+        feedback.className = 'quiz-feedback success-msg';
+      } else {
+        feedback.textContent = 'Не совсем так. Посмотрите правильные ответы.';
+        feedback.className = 'quiz-feedback error-msg';
+      }
+      feedback.style.display = 'block';
+      checkBtn.textContent = 'Попробовать снова';
     };
   });
 }
@@ -263,6 +431,250 @@ const expandFoldersToPath = (items, targetPath) => {
 
 .empty-state p {
   font-size: 1.2em;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.page-btn {
+  padding: 10px 15px;
+  background: var(--sidebar-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+  min-width: 40px;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.page-number-btn {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sidebar-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+.page-number-btn.mini {
+  width: 28px;
+  height: 28px;
+  font-size: 0.85em;
+}
+
+.top-pagination {
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: flex-start;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.page-number-btn:hover:not(.active) {
+  background: var(--hover-bg);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.page-number-btn.active {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: white;
+  font-weight: 700;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: var(--hover-bg);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.page-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Стили для квизов */
+.markdown-body :deep(.quiz-block) {
+  background: var(--sidebar-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 25px;
+  margin: 40px 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.markdown-body :deep(.quiz-header) {
+  font-weight: 700;
+  font-size: 0.9em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.markdown-body :deep(.quiz-question) {
+  font-size: 1.2em;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: var(--text-color);
+}
+
+.markdown-body :deep(.quiz-options) {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 25px;
+}
+
+.markdown-body :deep(.quiz-option) {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 12px 18px;
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--content-bg);
+}
+
+.markdown-body :deep(.quiz-option:hover) {
+  border-color: var(--accent-color);
+  background: var(--hover-bg);
+}
+
+.markdown-body :deep(.quiz-option.selected) {
+  border-color: var(--accent-color);
+  background: rgba(2, 132, 199, 0.05);
+}
+
+.markdown-body :deep(.quiz-option-checkbox) {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #cbd5e1;
+  border-radius: 4px;
+  flex-shrink: 0;
+  position: relative;
+  transition: all 0.2s;
+}
+
+.markdown-body :deep(.quiz-block[data-type="single"] .quiz-option-checkbox) {
+  border-radius: 50%;
+}
+
+.markdown-body :deep(.quiz-option.selected .quiz-option-checkbox) {
+  border-color: var(--accent-color);
+  background: var(--accent-color);
+}
+
+.markdown-body :deep(.quiz-option.selected .quiz-option-checkbox::after) {
+  content: '\f00c';
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  color: white;
+  font-size: 10px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.markdown-body :deep(.quiz-option.correct) {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.markdown-body :deep(.quiz-option.correct .quiz-option-checkbox) {
+  border-color: #10b981;
+  background: #10b981;
+}
+
+.markdown-body :deep(.quiz-option.incorrect) {
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.05);
+}
+
+.markdown-body :deep(.quiz-option.incorrect .quiz-option-checkbox) {
+  border-color: #ef4444;
+  background: #ef4444;
+}
+
+.markdown-body :deep(.quiz-check-btn) {
+  padding: 12px 24px;
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.markdown-body :deep(.quiz-check-btn:hover) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.markdown-body :deep(.quiz-feedback) {
+  margin-top: 20px;
+  padding: 12px 18px;
+  border-radius: 8px;
+  display: none;
+  font-weight: 500;
+}
+
+.markdown-body :deep(.success-msg) {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border-left: 4px solid #10b981;
+}
+
+.markdown-body :deep(.error-msg) {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+  border-left: 4px solid #ef4444;
+}
+
+.markdown-body :deep(.warning-msg) {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+  border-left: 4px solid #f59e0b;
+}
+
+.page-info {
+  font-weight: 500;
+  color: #94a3b8;
 }
 
 @media (max-width: 767px) {

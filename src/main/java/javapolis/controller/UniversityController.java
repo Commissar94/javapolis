@@ -34,18 +34,20 @@ public class UniversityController {
     }
 
     @GetMapping("/topic/**")
-    public ResponseEntity<?> getTopic(HttpServletRequest request) {
+    public ResponseEntity<?> getTopic(HttpServletRequest request, @RequestParam(defaultValue = "0") int page) {
         String requestURI = request.getRequestURI();
         String topicPath = requestURI.substring("/api/university/topic/".length());
         try {
             String decodedPath = URLDecoder.decode(topicPath, StandardCharsets.UTF_8);
-            String content = topicService.getTopicContent(decodedPath);
+            Map<String, Object> topicData = topicService.getTopicContent(decodedPath, page);
             List<TopicStructure> topicStructure = wrapIntoBasicCourse(topicService.getTopicStructure());
             TopicStructure currentTopic = findTopicInStructure(topicStructure, decodedPath);
 
             Map<String, Object> response = new HashMap<>();
             response.put("currentTopic", currentTopic);
-            response.put("content", content);
+            response.put("content", topicData.get("content"));
+            response.put("currentPage", topicData.get("currentPage"));
+            response.put("totalPages", topicData.get("totalPages"));
             
             return ResponseEntity.ok(response);
         } catch (IOException e) {

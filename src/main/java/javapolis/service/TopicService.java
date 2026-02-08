@@ -100,9 +100,9 @@ public class TopicService {
         return result;
     }
     
-    public String getTopicContent(String topicPath) throws IOException {
+    public Map<String, Object> getTopicContent(String topicPath, int page) throws IOException {
         System.out.println("=== GET TOPIC CONTENT ===");
-        System.out.println("Input topicPath: " + topicPath);
+        System.out.println("Input topicPath: " + topicPath + ", page: " + page);
         
         // Убираем расширение .md если оно есть
         if (topicPath.endsWith(".md")) {
@@ -123,21 +123,43 @@ public class TopicService {
         try (InputStream inputStream = resource.getInputStream()) {
             String markdown = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
             
+            // Разделяем на страницы по маркеру ===
+            // Используем regex для поддержки пробелов вокруг ===
+            String[] pages = markdown.split("\n===\\s*\n|\n===\\s*$|^===\\s*\n");
+            
+            // Если после split получилось меньше страниц, чем запрошено, берем последнюю
+            // Или если страница < 0, берем первую
+            int pageIndex = Math.max(0, Math.min(page, pages.length - 1));
+            String pageMarkdown = pages[pageIndex];
+
             // Сначала обрабатываем специальные стили в markdown
-            markdown = processStyleTags(markdown);
+            pageMarkdown = processStyleTags(pageMarkdown);
             
             // Обрабатываем {collapsible="true"} теги
-            markdown = processCollapsibleBlocks(markdown);
+            pageMarkdown = processCollapsibleBlocks(pageMarkdown);
+            
+            // Обрабатываем {quiz} теги
+            pageMarkdown = processQuizzes(pageMarkdown);
             
             // Конвертируем markdown в HTML
-            Node document = parser.parse(markdown);
+            Node document = parser.parse(pageMarkdown);
             String html = renderer.render(document);
             
             // Обрабатываем пути к изображениям
             html = processImagePaths(html, topicPath);
             
-            return html;
+            Map<String, Object> result = new java.util.HashMap<>();
+            result.put("content", html);
+            result.put("currentPage", pageIndex);
+            result.put("totalPages", pages.length);
+            
+            return result;
         }
+    }
+
+    public String getTopicContent(String topicPath) throws IOException {
+        Map<String, Object> result = getTopicContent(topicPath, 0);
+        return (String) result.get("content");
     }
 
     public ClassPathResource getImageResource(String path) {
@@ -273,5 +295,69 @@ public class TopicService {
         } while (found);
         
         return result;
+    }
+
+    private String processQuizzes(String markdown) {
+        Pattern quizPattern = Pattern.compile("\\{quiz\\}(.*?)\\{/quiz\\}", Pattern.DOTALL);
+        Matcher matcher = quizPattern.matcher(markdown);
+        StringBuffer sb = new StringBuffer();
+        
+        while (matcher.find()) {
+            String content = matcher.group(1).trim();
+            String[] lines = content.split("\\n");
+            
+            StringBuilder questionBuilder = new StringBuilder();
+            List<String> options = new ArrayList<>();
+            List<Boolean> correctList = new ArrayList<>();
+            
+            for (String line : lines) {
+                line = line.trim();
+                if (line.startsWith("+ ")) {
+                    options.add(line.substring(2).trim());
+                    correctList.add(true);
+                } else if (line.startsWith("- ")) {
+                    options.add(line.substring(2).trim());
+                    correctList.add(false);
+                } else if (!line.isEmpty()) {
+                    if (questionBuilder.length() > 0) questionBuilder.append("\n");
+                    questionBuilder.append(line);
+                }
+            }
+            
+            long correctCount = correctList.stream().filter(b -> b).count();
+            String type = correctCount > 1 ? "multiple" : "single";
+            
+            StringBuilder html = new StringBuilder();
+            html.append("<div class=\"quiz-block\" data-type=\"").append(type).append("\">");
+            html.append("<div class=\"quiz-header\"><i class=\"fas fa-question-circle\"></i> Проверь себя</div>");
+            html.append("<div class=\"quiz-question\">").append(renderMarkdown(questionBuilder.toString())).append("</div>");
+            html.append("<div class=\"quiz-options\">");
+            
+            for (int i = 0; i < options.size(); i++) {
+                html.append("<div class=\"quiz-option\" data-correct=\"").append(correctList.get(i)).append("\">");
+                html.append("<div class=\"quiz-option-checkbox\"></div>");
+                html.append("<div class=\"quiz-option-text\">").append(renderMarkdown(options.get(i))).append("</div>");
+                html.append("</div>");
+            }
+            
+            html.append("</div>");
+            html.append("<button class=\"quiz-check-btn\">Проверить ответ</button>");
+            html.append("<div class=\"quiz-feedback\"></div>");
+            html.append("</div>");
+            
+            matcher.appendReplacement(sb, Matcher.quoteReplacement(html.toString()));
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
+    
+    private String renderMarkdown(String markdown) {
+        Node document = parser.parse(markdown);
+        String html = renderer.render(document);
+        // Убираем лишние <p> теги, если это одна строка
+        if (html.startsWith("<p>") && html.endsWith("</p>\n") && html.indexOf("<p>", 3) == -1) {
+            html = html.substring(3, html.length() - 5);
+        }
+        return html;
     }
 }

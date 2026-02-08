@@ -14,7 +14,13 @@ const routes = [
   {
     path: '/university',
     name: 'University',
-    component: () => import('../views/University.vue')
+    component: () => import('../views/University.vue'),
+    children: [
+      {
+        path: ':pathMatch(.*)*',
+        component: () => import('../views/University.vue')
+      }
+    ]
   }
 ]
 

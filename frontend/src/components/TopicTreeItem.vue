@@ -17,19 +17,28 @@
   </li>
   <li v-else class="file-item" 
       :class="{ 'active': currentTopic && currentTopic.path === item.path }"
-      @click="$emit('load-topic', item.path)">
+      @click="navigateToTopic(item.path)">
     <i class="far fa-file-alt"></i>
     <span>{{ item.name }}</span>
   </li>
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
 defineProps({
   item: Object,
   currentTopic: Object
 })
 
 defineEmits(['load-topic'])
+
+const navigateToTopic = (path) => {
+  const cleanPath = path.replace('.md', '')
+  router.push(`/university/${cleanPath}`)
+}
 </script>
 
 <style scoped>
