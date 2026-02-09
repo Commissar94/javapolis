@@ -115,7 +115,7 @@ const toggleTheme = () => {
   --link-color: #cccccc;
   --link-active: #42b983;
   --border-color: #333333;
-  --sidebar-bg: #252526;
+  --sidebar-bg: #1e1e1e;
   --content-bg: #1e1e1e;
   --card-bg: #2d2d2d;
   --hover-bg: #37373d;
@@ -123,17 +123,20 @@ const toggleTheme = () => {
   --header-color: #ffffff;
 }
 
-body {
+html, body {
   margin: 0;
+  padding: 0;
   background-color: var(--bg-color);
   color: var(--text-color);
   transition: background-color 0.3s, color 0.3s;
+  min-height: 100vh;
 }
 
 #layout {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   text-align: center;
   min-height: 100vh;
+  background-color: var(--bg-color);
 }
 
 nav {

@@ -384,7 +384,7 @@ const expandFoldersToPath = (items, targetPath) => {
   height: calc(100vh - 120px);
   max-width: 1400px;
   margin: 0 auto;
-  background: var(--content-bg);
+  background: var(--bg-color);
   box-shadow: 0 0 20px rgba(0,0,0,0.1);
   border-radius: 8px;
   overflow: hidden;
@@ -480,7 +480,7 @@ const expandFoldersToPath = (items, targetPath) => {
   flex: 1;
   padding: 0;
   overflow-y: auto;
-  background: var(--content-bg);
+  background: var(--bg-color);
 }
 
 .content-inner {
