@@ -30,10 +30,14 @@
                   v-for="p in totalPages" 
                   :key="p" 
                   class="page-number-btn mini" 
-                  :class="{ 'active': currentPage === p - 1 }"
+                  :class="{ 
+                    'active': currentPage === p - 1,
+                    'completed': completedPages.includes(p - 1)
+                  }"
                   @click="changePage(p - 1)"
                 >
-                  {{ p }}
+                  <i v-if="completedPages.includes(p - 1) && currentPage !== p - 1" class="fas fa-check"></i>
+                  <span v-else>{{ p }}</span>
                 </button>
               </div>
             </div>
@@ -55,10 +59,14 @@
                   v-for="p in totalPages" 
                   :key="p" 
                   class="page-number-btn" 
-                  :class="{ 'active': currentPage === p - 1 }"
+                  :class="{ 
+                    'active': currentPage === p - 1,
+                    'completed': completedPages.includes(p - 1)
+                  }"
                   @click="changePage(p - 1)"
                 >
-                  {{ p }}
+                  <i v-if="completedPages.includes(p - 1) && currentPage !== p - 1" class="fas fa-check"></i>
+                  <span v-else>{{ p }}</span>
                 </button>
               </div>
               
@@ -95,6 +103,7 @@ const currentTopic = ref(null)
 const content = ref('')
 const currentPage = ref(0)
 const totalPages = ref(1)
+const completedPages = ref([])
 
 onMounted(async () => {
   try {
@@ -143,6 +152,7 @@ const loadTopic = async (path, page = 0) => {
     content.value = res.data.content
     currentPage.value = res.data.currentPage
     totalPages.value = res.data.totalPages
+    completedPages.value = res.data.completedPages || []
     
     nextTick(() => {
       // Автоматически раскрываем папки по пути к текущему топику
@@ -155,11 +165,15 @@ const loadTopic = async (path, page = 0) => {
       }
       setupCollapsibles()
       setupQuizzes()
+      setupCodeTasks()
       
       // Скроллим вверх при смене страницы
       const contentEl = document.querySelector('.content')
       if (contentEl) contentEl.scrollTop = 0
     })
+
+    // Отмечаем прогресс
+    markPageAsCompleted(cleanPath, page, res.data.totalPages);
   } catch (e) {
     console.error('Failed to load topic', e)
   }
@@ -173,6 +187,26 @@ const changePage = (newPage) => {
     path: `/university/${stringPath}`,
     query: { ...route.query, page: newPage }
   })
+}
+
+const markPageAsCompleted = async (topicPath, page, totalPages) => {
+  try {
+    await axios.post('/api/university/progress', {
+      topicPath,
+      page,
+      totalPages
+    });
+    
+    // После сохранения прогресса, если это была новая страница, 
+    // обновим структуру, чтобы увидеть галочку в сайдбаре
+    if (!completedPages.value.includes(page)) {
+      completedPages.value.push(page);
+      const res = await axios.get('/api/university/structure');
+      structure.value = res.data;
+    }
+  } catch (e) {
+    console.error('Failed to save progress', e);
+  }
 }
 
 const setupCollapsibles = () => {
@@ -264,6 +298,66 @@ const setupQuizzes = () => {
       }
       feedback.style.display = 'block';
       checkBtn.textContent = 'Попробовать снова';
+    };
+  });
+}
+
+const setupCodeTasks = () => {
+  const tasks = document.querySelectorAll('.code-task');
+  tasks.forEach(task => {
+    const runBtn = task.querySelector('.code-run-btn');
+    const output = task.querySelector('.code-output');
+    const textarea = task.querySelector('.code-editor');
+    const taskId = task.dataset.id || '';
+    const language = task.dataset.language || 'java';
+
+    // Простейший шаблон по умолчанию для Java
+    if (language === 'java' && (!textarea.value || textarea.value.trim() === '')) {
+      textarea.value = `class Solution {\n    static int sum(int a, int b) {\n        // TODO: реализуйте\n        return a + b;\n    }\n}`;
+    }
+
+    runBtn.onclick = async () => {
+      runBtn.disabled = true;
+      runBtn.textContent = 'Запуск...';
+      output.style.display = 'block';
+      output.innerHTML = '⏳ Выполняется...';
+      try {
+        const res = await axios.post('/api/judge/solutions', {
+          taskId,
+          language,
+          code: textarea.value
+        });
+        const data = res.data;
+        const status = data.status || 'UNKNOWN';
+        
+        let html = `<div class="output-header">
+          <span class="status-badge ${status.toLowerCase()}">${status}</span>
+          <span class="exit-code">Exit: ${data.exitCode}</span>
+        </div>`;
+        
+        if (data.stdout) {
+          html += `<div class="output-section">
+            <div class="section-label">Результат:</div>
+            <pre class="stdout">${data.stdout}</pre>
+          </div>`;
+        }
+        
+        if (data.stderr) {
+          html += `<div class="output-section error">
+            <div class="section-label">Ошибки:</div>
+            <pre class="stderr">${data.stderr}</pre>
+          </div>`;
+        }
+        
+        output.innerHTML = html;
+        output.className = 'code-output ' + (status === 'OK' ? 'ok' : 'fail');
+      } catch (e) {
+        output.textContent = 'Ошибка запроса: ' + (e?.response?.data?.message || e.message);
+        output.className = 'code-output fail';
+      } finally {
+        runBtn.disabled = false;
+        runBtn.textContent = 'Запустить тесты';
+      }
     };
   });
 }
@@ -511,6 +605,15 @@ const expandFoldersToPath = (items, targetPath) => {
   font-weight: 700;
 }
 
+.page-number-btn.completed:not(.active) {
+  border-color: #10b981;
+  color: #10b981;
+}
+
+.page-number-btn.completed i {
+  font-size: 0.8em;
+}
+
 .page-btn:hover:not(:disabled) {
   background: var(--hover-bg);
   border-color: var(--accent-color);
@@ -670,6 +773,135 @@ const expandFoldersToPath = (items, targetPath) => {
   background: rgba(245, 158, 11, 0.1);
   color: #d97706;
   border-left: 4px solid #f59e0b;
+}
+
+/* Стили для code-task */
+.markdown-body :deep(.code-task) {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  background: var(--sidebar-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 30px 0;
+}
+
+.markdown-body :deep(.code-task-left) {
+  padding-right: 10px;
+  border-right: 1px dashed var(--border-color);
+}
+
+.markdown-body :deep(.code-task-right) {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.markdown-body :deep(.code-editor) {
+  width: 100%;
+  height: 220px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 13px;
+  line-height: 1.4;
+  color: #e5e7eb;
+  background: #1e1e1e;
+  border: 1px solid #2d2d2d;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.markdown-body :deep(.code-task-actions) {
+  display: flex;
+  gap: 8px;
+}
+
+.markdown-body :deep(.code-run-btn) {
+  padding: 10px 16px;
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.markdown-body :deep(.code-output) {
+  background: #0b1220;
+  color: #e5e7eb;
+  border: 1px solid #1f2937;
+  border-radius: 8px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.markdown-body :deep(.output-header) {
+  background: #1e293b;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #334155;
+}
+
+.markdown-body :deep(.status-badge) {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.markdown-body :deep(.status-badge.ok) { background: #065f46; color: #34d399; }
+.markdown-body :deep(.status-badge.fail), 
+.markdown-body :deep(.status-badge.build_error), 
+.markdown-body :deep(.status-badge.error) { background: #7f1d1d; color: #f87171; }
+
+.markdown-body :deep(.exit-code) {
+  font-size: 11px;
+  color: #94a3b8;
+  font-family: monospace;
+}
+
+.markdown-body :deep(.output-section) {
+  padding: 12px;
+}
+
+.markdown-body :deep(.section-label) {
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.markdown-body :deep(.stdout), .markdown-body :deep(.stderr) {
+  margin: 0;
+  padding: 0;
+  background: transparent !important;
+  border: none !important;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  color: #e2e8f0;
+}
+
+.markdown-body :deep(.output-section.error) {
+  border-top: 1px solid #311;
+  background: rgba(127, 29, 29, 0.1);
+}
+
+.markdown-body :deep(.stderr) {
+  color: #f87171;
+}
+
+.markdown-body :deep(.code-output.ok) { border-left: 4px solid #10b981; }
+.markdown-body :deep(.code-output.fail) { border-left: 4px solid #ef4444; }
+
+@media (max-width: 1024px) {
+  .markdown-body :deep(.code-task) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .page-info {

@@ -125,7 +125,16 @@ public class TopicService {
             
             // Разделяем на страницы по маркеру ===
             // Используем regex для поддержки пробелов вокруг ===
-            String[] pages = markdown.split("\n===\\s*\n|\n===\\s*$|^===\\s*\n");
+            String[] splitPages = markdown.split("\n===\\s*\n|\n===\\s*$|^===\\s*\n");
+            
+            // Если после split получилось пустая строка в конце, убираем ее
+            List<String> pagesList = new ArrayList<>();
+            for (String p : splitPages) {
+                if (!p.trim().isEmpty() || splitPages.length == 1) {
+                    pagesList.add(p);
+                }
+            }
+            String[] pages = pagesList.toArray(new String[0]);
             
             // Если после split получилось меньше страниц, чем запрошено, берем последнюю
             // Или если страница < 0, берем первую
@@ -140,6 +149,9 @@ public class TopicService {
             
             // Обрабатываем {quiz} теги
             pageMarkdown = processQuizzes(pageMarkdown);
+
+            // Обрабатываем {code-task} теги
+            pageMarkdown = processCodeTasks(pageMarkdown);
             
             // Конвертируем markdown в HTML
             Node document = parser.parse(pageMarkdown);
@@ -359,5 +371,50 @@ public class TopicService {
             html = html.substring(3, html.length() - 5);
         }
         return html;
+    }
+
+    private String processCodeTasks(String markdown) {
+        // {code-task id="sum" language="java"}...markdown условия...{/code-task}
+        Pattern pattern = Pattern.compile("\\{code-task(.*?)\\}(.*?)\\{/code-task\\}", Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(markdown);
+        StringBuffer sb = new StringBuffer();
+
+        while (matcher.find()) {
+            String attrs = matcher.group(1);
+            String body = matcher.group(2).trim();
+
+            String id = extractAttr(attrs, "id");
+            String language = extractAttr(attrs, "language");
+            if (language == null || language.isBlank()) language = "java";
+
+            String leftHtml = renderMarkdown(body);
+
+            StringBuilder html = new StringBuilder();
+            html.append("<div class=\"code-task\" data-id=\"").append(id == null ? "" : id)
+                .append("\" data-language=\"").append(language).append("\">\n");
+            html.append("  <div class=\"code-task-left\">").append(leftHtml).append("</div>\n");
+            html.append("  <div class=\"code-task-right\">\n");
+            html.append("    <div class=\"code-editor-wrapper\">\n");
+            html.append("      <textarea class=\"code-editor\" spellcheck=\"false\" placeholder=\"Введите код решения здесь...\"></textarea>\n");
+            html.append("    </div>\n");
+            html.append("    <div class=\"code-task-actions\">\n");
+            html.append("      <button class=\"code-run-btn\"><i class=\"fas fa-play\"></i> Запустить тесты</button>\n");
+            html.append("    </div>\n");
+            html.append("    <pre class=\"code-output\" style=\"display:none;\"></pre>\n");
+            html.append("  </div>\n");
+            html.append("</div>");
+
+            matcher.appendReplacement(sb, Matcher.quoteReplacement(html.toString()));
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
+
+    private String extractAttr(String attrs, String name) {
+        if (attrs == null) return null;
+        Pattern p = Pattern.compile(name + "=\"(.*?)\"");
+        Matcher m = p.matcher(attrs);
+        if (m.find()) return m.group(1);
+        return null;
     }
 }

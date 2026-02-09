@@ -16,7 +16,7 @@
           <button @click="handleLogout" class="auth-btn logout">Выйти</button>
         </template>
         <template v-else>
-          <button @click="isLoginModalOpen = true" class="auth-btn login">Войти</button>
+          <button @click="isLoginModalOpen = true" class="auth-btn login">Личный кабинет</button>
         </template>
 
         <button @click="toggleTheme" class="theme-toggle">

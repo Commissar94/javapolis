@@ -2,29 +2,41 @@
   <div v-if="isOpen" class="modal-overlay" @click.self="close">
     <div class="modal-content">
       <div class="modal-header">
-        <h3>Вход в систему</h3>
+        <div class="auth-tabs">
+          <button 
+            class="tab-btn" 
+            :class="{ active: mode === 'login' }" 
+            @click="mode = 'login'"
+          >Вход</button>
+          <button 
+            class="tab-btn" 
+            :class="{ active: mode === 'register' }" 
+            @click="mode = 'register'"
+          >Регистрация</button>
+        </div>
         <button class="close-btn" @click="close">
           <i class="fas fa-times"></i>
         </button>
       </div>
-      <form @submit.prevent="handleSubmit" class="login-form">
+      
+      <form v-if="mode === 'login'" @submit.prevent="handleLogin" class="auth-form">
         <div class="form-group">
-          <label for="username">Имя пользователя</label>
+          <label for="login-username">Имя пользователя</label>
           <input 
             type="text" 
-            id="username" 
-            v-model="username" 
+            id="login-username" 
+            v-model="loginUsername" 
             placeholder="Введите имя" 
             required 
             ref="usernameInput"
           >
         </div>
         <div class="form-group">
-          <label for="password">Пароль</label>
+          <label for="login-password">Пароль</label>
           <input 
             type="password" 
-            id="password" 
-            v-model="password" 
+            id="login-password" 
+            v-model="loginPassword" 
             placeholder="Введите пароль" 
             required
           >
@@ -36,6 +48,61 @@
           <button type="submit" :disabled="loading" class="submit-btn">
             <span v-if="loading">Вход...</span>
             <span v-else>Войти</span>
+          </button>
+        </div>
+      </form>
+
+      <form v-else @submit.prevent="handleRegister" class="auth-form">
+        <div class="form-group">
+          <label for="reg-username">Имя пользователя *</label>
+          <input 
+            type="text" 
+            id="reg-username" 
+            v-model="regUsername" 
+            placeholder="Придумайте логин" 
+            required
+          >
+        </div>
+        <div class="form-group">
+          <label for="reg-email">Email *</label>
+          <input 
+            type="email" 
+            id="reg-email" 
+            v-model="regEmail" 
+            placeholder="example@mail.com" 
+            required
+          >
+        </div>
+        <div class="form-group">
+          <label for="reg-password">Пароль *</label>
+          <input 
+            type="password" 
+            id="reg-password" 
+            v-model="regPassword" 
+            placeholder="Минимум 8 символов" 
+            required
+          >
+        </div>
+        <div class="form-group">
+          <label for="reg-confirm">Подтвердите пароль *</label>
+          <input 
+            type="password" 
+            id="reg-confirm" 
+            v-model="regConfirm" 
+            placeholder="Повторите пароль" 
+            required
+          >
+        </div>
+        <div v-if="error" class="error-message">
+          {{ error }}
+        </div>
+        <div v-if="success" class="success-message">
+          {{ success }}
+        </div>
+        <div class="form-actions">
+          <button type="submit" :disabled="loading" class="submit-btn">
+            <span v-if="loading">Загрузка...</span>
+            <span v-else>Создать аккаунт</span>
           </button>
         </div>
       </form>
@@ -53,17 +120,28 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'login-success'])
 
-const username = ref('')
-const password = ref('')
+const mode = ref('login')
+const loginUsername = ref('')
+const loginPassword = ref('')
+const regUsername = ref('')
+const regEmail = ref('')
+const regPassword = ref('')
+const regConfirm = ref('')
 const error = ref('')
+const success = ref('')
 const loading = ref(false)
 const usernameInput = ref(null)
 
 watch(() => props.isOpen, (newVal) => {
   if (newVal) {
     error.value = ''
-    username.value = ''
-    password.value = ''
+    success.value = ''
+    loginUsername.value = ''
+    loginPassword.value = ''
+    regUsername.value = ''
+    regEmail.value = ''
+    regPassword.value = ''
+    regConfirm.value = ''
     nextTick(() => {
       if (usernameInput.value) usernameInput.value.focus()
     })
@@ -74,13 +152,13 @@ const close = () => {
   emit('close')
 }
 
-const handleSubmit = async () => {
+const handleLogin = async () => {
   loading.value = true
   error.value = ''
   try {
     const response = await axios.post('/api/auth/login', {
-      username: username.value,
-      password: password.value
+      username: loginUsername.value,
+      password: loginPassword.value
     })
     if (response.data.success) {
       emit('login-success', response.data.username)
@@ -93,6 +171,62 @@ const handleSubmit = async () => {
       error.value = err.response.data.message
     } else {
       error.value = 'Не удалось подключиться к серверу'
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+const handleRegister = async () => {
+  if (regPassword.value !== regConfirm.value) {
+    error.value = 'Пароли не совпадают'
+    return
+  }
+  if (regPassword.value.length < 8) {
+    error.value = 'Пароль слишком короткий'
+    return
+  }
+
+  loading.value = true
+  error.value = ''
+  success.value = ''
+  try {
+    const response = await axios.post('/api/registration/register', {
+      username: regUsername.value,
+      email: regEmail.value,
+      password: regPassword.value
+    })
+    if (response.data.success) {
+      success.value = 'Регистрация успешна! Входим...'
+      // Пытаемся сразу войти
+      setTimeout(async () => {
+        try {
+          const loginRes = await axios.post('/api/auth/login', {
+            username: regUsername.value,
+            password: regPassword.value
+          })
+          if (loginRes.data.success) {
+            emit('login-success', loginRes.data.username)
+            close()
+          } else {
+            mode.value = 'login'
+            loginUsername.value = regUsername.value
+            success.value = ''
+          }
+        } catch (e) {
+          mode.value = 'login'
+          loginUsername.value = regUsername.value
+          success.value = ''
+        }
+      }, 1000)
+    } else {
+      error.value = response.data.message || 'Ошибка регистрации'
+    }
+  } catch (err) {
+    if (err.response && err.response.data && err.response.data.message) {
+      error.value = err.response.data.message
+    } else {
+      error.value = 'Ошибка при регистрации'
     }
   } finally {
     loading.value = false
@@ -139,10 +273,31 @@ const handleSubmit = async () => {
   margin-bottom: 24px;
 }
 
-.modal-header h3 {
-  margin: 0;
-  font-size: 1.5rem;
-  color: var(--header-color);
+.auth-tabs {
+  display: flex;
+  gap: 20px;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--text-color);
+  opacity: 0.5;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+}
+
+.tab-btn.active {
+  opacity: 1;
+  border-bottom-color: var(--accent-color);
+}
+
+.tab-btn:hover {
+  opacity: 0.8;
 }
 
 .close-btn {
@@ -159,10 +314,19 @@ const handleSubmit = async () => {
   opacity: 1;
 }
 
-.login-form {
+.auth-form {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.success-message {
+  color: #10b981;
+  font-size: 0.9rem;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .form-group {

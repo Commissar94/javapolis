@@ -40,9 +40,9 @@ public class RegistrationService {
         user.setEmail(request.getEmail());
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
-        user.setEmailVerified(false);
+        user.setEmailVerified(true); // Для упрощения тестирования ставим true по умолчанию
         
-        // Генерируем токен верификации
+        // Генерируем токен верификации (опционально, так как уже verified)
         String verificationToken = UUID.randomUUID().toString();
         user.setVerificationToken(verificationToken);
         user.setVerificationTokenExpiry(LocalDateTime.now().plusHours(24)); // Токен действителен 24 часа
@@ -52,8 +52,8 @@ public class RegistrationService {
         
         // Отправляем email для верификации
         try {
-            emailService.sendVerificationEmail(user.getEmail(), user.getUsername(), verificationToken);
-            return RegistrationResult.success("Регистрация успешна! Проверьте email для подтверждения аккаунта.");
+            // emailService.sendVerificationEmail(user.getEmail(), user.getUsername(), verificationToken);
+            return RegistrationResult.success("Регистрация успешна! Теперь вы можете войти в систему.");
         } catch (Exception e) {
             // Если не удалось отправить email, не удаляем пользователя
             System.err.println("Ошибка отправки email: " + e.getMessage());

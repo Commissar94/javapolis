@@ -1,5 +1,6 @@
 package javapolis.model.dto;
 
-public record JudgeRequest(String language,
+public record JudgeRequest(String taskId,
+                           String language,
                            String code) {
 }

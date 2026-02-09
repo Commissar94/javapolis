@@ -2,8 +2,9 @@
   <li v-if="item.type === 'folder'" class="folder-item" :class="{ 'expanded': item.expanded }">
     <div class="item-title" @click="item.expanded = !item.expanded">
       <i class="fas" :class="item.expanded ? 'fa-chevron-down' : 'fa-chevron-right'"></i>
-      <i class="fas fa-folder"></i>
+      <i class="fas" :class="item.completed ? 'fa-folder-check completed-folder' : 'fa-folder'"></i>
       <span>{{ item.name }}</span>
+      <i v-if="item.completed" class="fas fa-check-circle status-icon"></i>
     </div>
     <ul v-show="item.expanded" class="sub-list">
       <TopicTreeItem 
@@ -16,10 +17,14 @@
     </ul>
   </li>
   <li v-else class="file-item" 
-      :class="{ 'active': currentTopic && currentTopic.path === item.path }"
+      :class="{ 
+        'active': currentTopic && currentTopic.path === item.path,
+        'completed': item.completed
+      }"
       @click="navigateToTopic(item.path)">
-    <i class="far fa-file-alt"></i>
+    <i class="fas" :class="item.completed ? 'fa-file-signature' : 'far fa-file-alt'"></i>
     <span>{{ item.name }}</span>
+    <i v-if="item.completed" class="fas fa-check status-icon"></i>
   </li>
 </template>
 
@@ -99,5 +104,23 @@ const navigateToTopic = (path) => {
 
 .file-item.active i.fa-file-alt {
   color: #0284c7;
+}
+
+.status-icon {
+  margin-left: auto;
+  font-size: 0.85em;
+  color: #10b981;
+}
+
+.file-item.completed span {
+  color: #10b981;
+}
+
+.completed-folder {
+  color: #10b981 !important;
+}
+
+.fa-file-signature {
+  color: #10b981;
 }
 </style>

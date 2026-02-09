@@ -9,10 +9,12 @@ public class TopicStructure {
     private String path; // путь к файлу или папке
     private List<TopicStructure> children;
     private boolean expanded; // для папок - развернута ли по умолчанию
+    private boolean completed; // пройдена ли тема
 
     public TopicStructure() {
         this.children = new ArrayList<>();
         this.expanded = false;
+        this.completed = false;
     }
 
     public TopicStructure(String name, String type, String path) {
@@ -20,6 +22,11 @@ public class TopicStructure {
         this.name = name;
         this.type = type;
         this.path = path;
+    }
+
+    public TopicStructure(String name, String type, String path, boolean completed) {
+        this(name, type, path);
+        this.completed = completed;
     }
 
     // Геттеры и сеттеры
@@ -61,6 +68,14 @@ public class TopicStructure {
 
     public void setExpanded(boolean expanded) {
         this.expanded = expanded;
+    }
+
+    public boolean isCompleted() {
+        return completed;
+    }
+
+    public void setCompleted(boolean completed) {
+        this.completed = completed;
     }
 
     public void addChild(TopicStructure child) {

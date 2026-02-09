@@ -57,7 +57,7 @@ class JudgeControllerTest {
     @Test
     void judge_ShouldReturnResponse() throws Exception {
         // Given
-        JudgeRequest request = new JudgeRequest("java", "public class Main {}");
+        JudgeRequest request = new JudgeRequest("sum", "java", "public class Main {}");
         JudgeResponse expectedResponse = new JudgeResponse("OK", "output", "", 0);
         
         when(judgeService.judge(any(JudgeRequest.class))).thenReturn(expectedResponse);

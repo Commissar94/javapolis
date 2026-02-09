@@ -1,13 +1,16 @@
 package javapolis.controller;
 
 import javapolis.model.TopicStructure;
+import javapolis.model.User;
+import javapolis.model.UserProgress;
+import javapolis.repository.UserRepository;
+import javapolis.service.ProgressService;
 import javapolis.service.TopicService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 
@@ -17,6 +20,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -27,9 +32,26 @@ public class UniversityController {
     @Autowired
     private TopicService topicService;
 
+    @Autowired
+    private ProgressService progressService;
+
+    @Autowired
+    private UserRepository userRepository;
+
     @GetMapping("/structure")
     public ResponseEntity<?> getStructure() {
-        List<TopicStructure> wrapped = wrapIntoBasicCourse(topicService.getTopicStructure());
+        List<TopicStructure> structure = topicService.getTopicStructure();
+        
+        // Применяем прогресс текущего пользователя
+        User user = getCurrentUser();
+        if (user != null) {
+            List<UserProgress> userProgress = progressService.getUserProgress(user);
+            Map<String, UserProgress> progressMap = userProgress.stream()
+                    .collect(Collectors.toMap(UserProgress::getTopicPath, p -> p));
+            applyProgressToStructure(structure, progressMap);
+        }
+
+        List<TopicStructure> wrapped = wrapIntoBasicCourse(structure);
         return ResponseEntity.ok(wrapped);
     }
 
@@ -40,18 +62,81 @@ public class UniversityController {
         try {
             String decodedPath = URLDecoder.decode(topicPath, StandardCharsets.UTF_8);
             Map<String, Object> topicData = topicService.getTopicContent(decodedPath, page);
-            List<TopicStructure> topicStructure = wrapIntoBasicCourse(topicService.getTopicStructure());
-            TopicStructure currentTopic = findTopicInStructure(topicStructure, decodedPath);
+            
+            List<TopicStructure> fullStructure = topicService.getTopicStructure();
+            User user = getCurrentUser();
+            
+            // Информация о пройденных страницах для текущей темы
+            List<Integer> completedPages = new java.util.ArrayList<>();
+            if (user != null) {
+                progressService.getTopicProgress(user, decodedPath)
+                        .ifPresent(p -> {
+                            String[] pages = p.getCompletedPages().split(",");
+                            for (String s : pages) {
+                                if (!s.isBlank()) completedPages.add(Integer.parseInt(s.trim()));
+                            }
+                        });
+                
+                // Также обновим структуру для навигации
+                List<UserProgress> userProgress = progressService.getUserProgress(user);
+                Map<String, UserProgress> progressMap = userProgress.stream()
+                        .collect(Collectors.toMap(UserProgress::getTopicPath, p -> p));
+                applyProgressToStructure(fullStructure, progressMap);
+            }
+
+            List<TopicStructure> wrappedStructure = wrapIntoBasicCourse(fullStructure);
+            TopicStructure currentTopic = findTopicInStructure(wrappedStructure, decodedPath);
 
             Map<String, Object> response = new HashMap<>();
             response.put("currentTopic", currentTopic);
             response.put("content", topicData.get("content"));
             response.put("currentPage", topicData.get("currentPage"));
             response.put("totalPages", topicData.get("totalPages"));
+            response.put("completedPages", completedPages);
             
             return ResponseEntity.ok(response);
         } catch (IOException e) {
             return ResponseEntity.status(404).body("Лекция не найдена: " + topicPath);
+        }
+    }
+
+    @PostMapping("/progress")
+    public ResponseEntity<?> updateProgress(@RequestBody Map<String, Object> payload) {
+        User user = getCurrentUser();
+        if (user == null) {
+            return ResponseEntity.status(401).build();
+        }
+
+        String topicPath = (String) payload.get("topicPath");
+        int page = (int) payload.get("page");
+        int totalPages = (int) payload.get("totalPages");
+
+        progressService.markPageAsCompleted(user, topicPath, page, totalPages);
+        return ResponseEntity.ok().build();
+    }
+
+    private User getCurrentUser() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth.getPrincipal().equals("anonymousUser")) {
+            return null;
+        }
+        return userRepository.findByUsername(auth.getName()).orElse(null);
+    }
+
+    private void applyProgressToStructure(List<TopicStructure> structure, Map<String, UserProgress> progressMap) {
+        for (TopicStructure item : structure) {
+            if (item.isFile()) {
+                String path = item.getPath().replace(".md", "");
+                if (progressMap.containsKey(path)) {
+                    item.setCompleted(progressMap.get(path).isCompleted());
+                }
+            } else if (item.isFolder()) {
+                applyProgressToStructure(item.getChildren(), progressMap);
+                // Папка считается завершенной, если все ее дети завершены
+                boolean allCompleted = !item.getChildren().isEmpty() && 
+                        item.getChildren().stream().allMatch(TopicStructure::isCompleted);
+                item.setCompleted(allCompleted);
+            }
         }
     }
 
