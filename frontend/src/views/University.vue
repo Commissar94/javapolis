@@ -78,6 +78,12 @@
                 <i class="fas fa-chevron-right"></i>
               </button>
             </div>
+
+            <!-- Секция комментариев -->
+            <CommentSection 
+              :topic-path="currentTopic.path" 
+              :page="currentPage"
+            />
           </div>
           <div v-else class="empty-state">
             <i class="fas fa-book-open"></i>
@@ -94,6 +100,7 @@ import { ref, onMounted, nextTick, watch } from 'vue'
 import axios from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 import TopicTreeItem from '../components/TopicTreeItem.vue'
+import CommentSection from '../components/CommentSection.vue'
 
 const route = useRoute()
 const router = useRouter()

@@ -9,10 +9,12 @@
       
       <div class="nav-right">
         <template v-if="user">
-          <span class="username">
-            <i class="fas fa-user"></i>
-            {{ user.username }}
-          </span>
+          <router-link :to="'/profile/' + user.username" class="username-link">
+            <span class="username">
+              <i class="fas fa-user"></i>
+              {{ user.username }}
+            </span>
+          </router-link>
           <button @click="handleLogout" class="auth-btn logout">Выйти</button>
         </template>
         <template v-else>
@@ -134,7 +136,6 @@ html, body {
 
 #layout {
   font-family: Avenir, Helvetica, Arial, sans-serif;
-  text-align: center;
   min-height: 100vh;
   background-color: var(--bg-color);
 }
@@ -187,6 +188,10 @@ nav {
   display: flex;
   align-items: center;
   gap: 15px;
+}
+
+.username-link {
+  text-decoration: none;
 }
 
 .username {

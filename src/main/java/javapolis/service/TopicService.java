@@ -54,6 +54,22 @@ public class TopicService {
             .build();
     }
 
+    public long countTotalTopics() {
+        return countTopicsInStructure(getTopicStructure());
+    }
+
+    private long countTopicsInStructure(List<TopicStructure> structure) {
+        long count = 0;
+        for (TopicStructure item : structure) {
+            if (item.isFile()) {
+                count++;
+            } else if (item.isFolder()) {
+                count += countTopicsInStructure(item.getChildren());
+            }
+        }
+        return count;
+    }
+
     public List<TopicStructure> getTopicStructure() {
         try {
             ClassPathResource topicsDir = new ClassPathResource("topics");
