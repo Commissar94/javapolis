@@ -1,16 +1,21 @@
 <template>
   <div class="university">
-    <h1>Университет</h1>
-    <div class="container">
-      <div class="sidebar">
+    <div v-if="structure" class="container" :class="{ 'no-sidebar': !currentTopic }">
+      <div v-if="currentTopic" class="sidebar">
+        <div class="sidebar-header-nav">
+          <button class="back-btn" @click="goBackToCourses">
+            <i class="fas fa-arrow-left"></i>
+            <span>К курсам</span>
+          </button>
+        </div>
         <div class="sidebar-header">
           <i class="fas fa-graduation-cap"></i>
           <span>Темы курса</span>
         </div>
         <div class="sidebar-content">
-          <ul v-if="structure" class="topic-list">
+          <ul v-if="currentCourseStructure" class="topic-list">
             <TopicTreeItem 
-              v-for="item in structure" 
+              v-for="item in currentCourseStructure" 
               :key="item.path" 
               :item="item" 
               :current-topic="currentTopic"
@@ -85,9 +90,36 @@
               :page="currentPage"
             />
           </div>
+          <div v-else-if="structure" class="courses-selection">
+            <h2 class="selection-title">Выберите курс</h2>
+            <div class="courses-grid">
+              <CourseCard 
+                v-for="item in coursesOnly" 
+                :key="item.path" 
+                :course="item"
+                @click="startCourse(item)"
+              />
+            </div>
+            
+            <div v-if="filesOnly.length > 0" class="other-topics">
+              <h3 class="selection-subtitle">Другие темы</h3>
+              <div class="topics-grid">
+                <div 
+                  v-for="topic in filesOnly" 
+                  :key="topic.path" 
+                  class="simple-topic-card"
+                  @click="navigateToTopic(topic.path)"
+                >
+                  <i class="fas fa-file-alt"></i>
+                  <span>{{ topic.name }}</span>
+                  <i v-if="topic.completed" class="fas fa-check-circle completed-icon"></i>
+                </div>
+              </div>
+            </div>
+          </div>
           <div v-else class="empty-state">
             <i class="fas fa-book-open"></i>
-            <p>Выберите тему из списка слева, чтобы начать обучение</p>
+            <p>Загрузка структуры обучения...</p>
           </div>
         </div>
       </div>
@@ -96,11 +128,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, watch } from 'vue'
+import { ref, onMounted, nextTick, watch, computed } from 'vue'
 import axios from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 import TopicTreeItem from '../components/TopicTreeItem.vue'
 import CommentSection from '../components/CommentSection.vue'
+import CourseCard from '../components/CourseCard.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -111,6 +144,33 @@ const content = ref('')
 const currentPage = ref(0)
 const totalPages = ref(1)
 const completedPages = ref([])
+
+const coursesOnly = computed(() => {
+  return structure.value ? structure.value.filter(item => item.type === 'folder') : []
+})
+
+const filesOnly = computed(() => {
+  return structure.value ? structure.value.filter(item => item.type === 'file') : []
+})
+
+const currentCourseStructure = computed(() => {
+  if (!currentTopic.value || !structure.value) return null
+  
+  // Определяем корневую папку (курс) текущей темы
+  const pathParts = currentTopic.value.path.split('/')
+  if (pathParts.length === 1) {
+    // Если тема в корне (не в папке), то это файл, показываем его в списке "Другие темы"
+    // Но в сайдбаре мы можем показать просто этот файл или ничего.
+    // Обычно "Другие темы" не имеют древовидной навигации в сайдбаре, 
+    // но если пользователь хочет, можем показать список всех корневых файлов.
+    return structure.value.filter(item => item.type === 'file')
+  }
+  
+  const courseRootName = pathParts[0]
+  const course = structure.value.find(item => item.name === courseRootName && item.type === 'folder')
+  
+  return course ? course.children : []
+})
 
 onMounted(async () => {
   try {
@@ -194,6 +254,34 @@ const changePage = (newPage) => {
     path: `/university/${stringPath}`,
     query: { ...route.query, page: newPage }
   })
+}
+
+const startCourse = (course) => {
+  const firstTopic = findFirstTopic(course)
+  if (firstTopic) {
+    navigateToTopic(firstTopic.path)
+  }
+}
+
+const findFirstTopic = (item) => {
+  if (item.type === 'file') return item
+  if (item.children && item.children.length > 0) {
+    for (const child of item.children) {
+      const found = findFirstTopic(child)
+      if (found) return found
+    }
+  }
+  return null
+}
+
+const navigateToTopic = (path) => {
+  const cleanPath = path.replace('.md', '')
+  router.push(`/university/${cleanPath}`)
+}
+
+const goBackToCourses = () => {
+  currentTopic.value = null
+  router.push('/university')
 }
 
 const markPageAsCompleted = async (topicPath, page, totalPages) => {
@@ -388,13 +476,11 @@ const expandFoldersToPath = (items, targetPath) => {
 <style scoped>
 .container {
   display: flex;
-  height: calc(100vh - 120px);
-  max-width: 1400px;
-  margin: 0 auto;
-  background: var(--bg-color);
-  box-shadow: 0 0 20px rgba(0,0,0,0.1);
-  border-radius: 8px;
-  overflow: hidden;
+  min-height: calc(100vh - 64px); /* Высота за вычетом навбара, если он есть */
+}
+
+.container.no-sidebar {
+  display: block;
 }
 
 .sidebar {
@@ -403,6 +489,9 @@ const expandFoldersToPath = (items, targetPath) => {
   flex-direction: column;
   background: var(--sidebar-bg);
   border-right: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  height: calc(100vh - 64px);
 }
 
 .sidebar-header {
@@ -414,6 +503,38 @@ const expandFoldersToPath = (items, targetPath) => {
   gap: 10px;
   border-bottom: 1px solid var(--border-color);
   font-size: 1.1em;
+}
+
+.sidebar-header-nav {
+  padding: 10px 15px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--content-bg);
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: 1px solid var(--border-color);
+  padding: 6px 12px;
+  border-radius: 6px;
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 0.9em;
+  font-weight: 500;
+  transition: all 0.2s;
+  width: 100%;
+}
+
+.back-btn:hover {
+  background: var(--hover-bg);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.back-btn i {
+  font-size: 0.85em;
 }
 
 .sidebar-content {
@@ -1098,5 +1219,74 @@ li {
 }
 li:hover {
   color: #42b983;
+}
+/* Стили для выбора курсов */
+.courses-selection {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.selection-title {
+  font-size: 2em;
+  margin-bottom: 30px;
+  color: var(--text-color);
+}
+
+.courses-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 25px;
+  margin-bottom: 50px;
+}
+
+.other-topics {
+  margin-top: 40px;
+}
+
+.selection-subtitle {
+  font-size: 1.5em;
+  margin-bottom: 20px;
+  color: var(--text-color);
+  opacity: 0.8;
+}
+
+.topics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.simple-topic-card {
+  background: var(--sidebar-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 15px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-color);
+}
+
+.simple-topic-card:hover {
+  border-color: var(--accent-color);
+  background: var(--hover-bg);
+}
+
+.simple-topic-card i.fa-file-alt {
+  color: #94a3b8;
+}
+
+.completed-icon {
+  margin-left: auto;
+  color: #10b981;
+  font-size: 0.9em;
+}
+
+@media (max-width: 767px) {
+  .courses-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

@@ -51,8 +51,7 @@ public class UniversityController {
             applyProgressToStructure(structure, progressMap);
         }
 
-        List<TopicStructure> wrapped = wrapIntoBasicCourse(structure);
-        return ResponseEntity.ok(wrapped);
+        return ResponseEntity.ok(structure);
     }
 
     @GetMapping("/topic/**")
@@ -84,8 +83,7 @@ public class UniversityController {
                 applyProgressToStructure(fullStructure, progressMap);
             }
 
-            List<TopicStructure> wrappedStructure = wrapIntoBasicCourse(fullStructure);
-            TopicStructure currentTopic = findTopicInStructure(wrappedStructure, decodedPath);
+            TopicStructure currentTopic = findTopicInStructure(fullStructure, decodedPath);
 
             Map<String, Object> response = new HashMap<>();
             response.put("currentTopic", currentTopic);
@@ -173,7 +171,7 @@ public class UniversityController {
                     return item;
                 }
             }
-            if (item.isFolder()) {
+            if (item.getChildren() != null && !item.getChildren().isEmpty()) {
                 TopicStructure found = findTopicInStructure(item.getChildren(), topicPath);
                 if (found != null) {
                     return found;
