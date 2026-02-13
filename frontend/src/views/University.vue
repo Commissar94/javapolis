@@ -25,7 +25,7 @@
       </div>
       <div class="content">
         <div class="content-inner">
-          <div v-if="currentTopic">
+          <div v-if="currentTopic && user">
             <h2 class="topic-title">{{ currentTopic.name }}</h2>
             
             <!-- Мини-пагинация сверху -->
@@ -90,6 +90,14 @@
               :page="currentPage"
             />
           </div>
+          <div v-else-if="currentTopic && !user" class="restricted-content">
+            <div class="lock-overlay">
+              <i class="fas fa-lock"></i>
+              <h3>Содержимое заблокировано</h3>
+              <p>Пожалуйста, войдите или зарегистрируйтесь, чтобы прочитать эту лекцию.</p>
+              <button class="auth-btn" @click="openLogin">Войти / Регистрация</button>
+            </div>
+          </div>
           <div v-else-if="structure" class="courses-selection">
             <h2 class="selection-title">Выберите курс</h2>
             <div class="courses-grid">
@@ -124,19 +132,31 @@
         </div>
       </div>
     </div>
+    
+    <GuestAccessModal 
+      :is-open="isGuestModalOpen" 
+      @close="isGuestModalOpen = false" 
+      @open-login="openLogin"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, watch, computed } from 'vue'
+import { ref, onMounted, nextTick, watch, computed, inject } from 'vue'
 import axios from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 import TopicTreeItem from '../components/TopicTreeItem.vue'
 import CommentSection from '../components/CommentSection.vue'
 import CourseCard from '../components/CourseCard.vue'
+import GuestAccessModal from '../components/GuestAccessModal.vue'
 
 const route = useRoute()
 const router = useRouter()
+
+const user = inject('user')
+const openLogin = inject('openLogin')
+
+const isGuestModalOpen = ref(false)
 
 const structure = ref(null)
 const currentTopic = ref(null)
@@ -181,7 +201,12 @@ onMounted(async () => {
     const path = route.params.pathMatch
     if (path) {
       const page = parseInt(route.query.page) || 0
-      loadTopic(path, page)
+      if (!user.value) {
+        isGuestModalOpen.value = true
+        currentTopic.value = { name: 'Доступ ограничен', path: Array.isArray(path) ? path.join('/') : path }
+      } else {
+        loadTopic(path, page)
+      }
     }
   } catch (e) {
     console.error('Failed to load structure', e)
@@ -193,6 +218,19 @@ watch(() => route.params.pathMatch, (newPath) => {
   if (newPath) {
     const page = parseInt(route.query.page) || 0
     loadTopic(newPath, page)
+  }
+})
+
+watch(() => user.value, (newUser) => {
+  if (newUser) {
+    const path = route.params.pathMatch
+    if (path) {
+      const page = parseInt(route.query.page) || 0
+      loadTopic(path, page)
+    }
+  } else {
+    // Если разлогинились, сбрасываем контент
+    content.value = ''
   }
 })
 
@@ -208,6 +246,16 @@ const loadTopic = async (path, page = 0) => {
   
   // Приводим путь к строке, если это массив (бывает в pathMatch)
   const stringPath = Array.isArray(path) ? path.join('/') : path
+  
+  if (!user.value) {
+    isGuestModalOpen.value = true
+    // Мы всё равно можем захотеть загрузить структуру темы (имена и т.д.), 
+    // но контент не покажем. Или можем вообще не загружать.
+    // Покажем модалку и заблокируем отображение.
+    currentTopic.value = { name: 'Загрузка...', path: stringPath }
+    content.value = ''
+    return
+  }
   
   try {
     // В API путь ожидается без .md и после /api/university/topic/
@@ -257,6 +305,10 @@ const changePage = (newPage) => {
 }
 
 const startCourse = (course) => {
+  if (!user.value) {
+    isGuestModalOpen.value = true
+    return
+  }
   const firstTopic = findFirstTopic(course)
   if (firstTopic) {
     navigateToTopic(firstTopic.path)
@@ -275,6 +327,10 @@ const findFirstTopic = (item) => {
 }
 
 const navigateToTopic = (path) => {
+  if (!user.value) {
+    isGuestModalOpen.value = true
+    return
+  }
   const cleanPath = path.replace('.md', '')
   router.push(`/university/${cleanPath}`)
 }
@@ -1282,6 +1338,56 @@ li:hover {
   margin-left: auto;
   color: #10b981;
   font-size: 0.9em;
+}
+
+.restricted-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 400px;
+  background: var(--sidebar-bg);
+  border-radius: 12px;
+  border: 1px dashed var(--border-color);
+  margin: 20px 0;
+}
+
+.lock-overlay {
+  text-align: center;
+  padding: 40px;
+}
+
+.lock-overlay i {
+  font-size: 4rem;
+  color: var(--accent-color);
+  margin-bottom: 20px;
+}
+
+.lock-overlay h3 {
+  font-size: 1.8rem;
+  margin-bottom: 10px;
+  color: var(--header-color);
+}
+
+.lock-overlay p {
+  font-size: 1.1rem;
+  margin-bottom: 24px;
+  opacity: 0.8;
+}
+
+.lock-overlay .auth-btn {
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lock-overlay .auth-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.1);
 }
 
 @media (max-width: 767px) {

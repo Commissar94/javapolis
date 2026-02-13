@@ -39,13 +39,19 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, provide } from 'vue'
 import axios from 'axios'
 import LoginModal from './components/LoginModal.vue'
 
 const theme = ref('dark')
 const user = ref(null)
 const isLoginModalOpen = ref(false)
+
+provide('openLogin', () => {
+  isLoginModalOpen.value = true
+})
+
+provide('user', user)
 
 onMounted(async () => {
   const savedTheme = localStorage.getItem('theme')

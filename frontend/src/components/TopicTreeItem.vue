@@ -30,8 +30,11 @@
 
 <script setup>
 import { useRouter } from 'vue-router'
+import { inject } from 'vue'
 
 const router = useRouter()
+const user = inject('user')
+const openLogin = inject('openLogin')
 
 defineProps({
   item: Object,
@@ -41,6 +44,10 @@ defineProps({
 defineEmits(['load-topic'])
 
 const navigateToTopic = (path) => {
+  if (!user.value) {
+    if (openLogin) openLogin()
+    return
+  }
   const cleanPath = path.replace('.md', '')
   router.push(`/university/${cleanPath}`)
 }
