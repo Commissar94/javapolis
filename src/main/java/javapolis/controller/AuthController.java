@@ -25,9 +25,11 @@ import java.util.Map;
 public class AuthController {
 
     private final AuthenticationManager authenticationManager;
+    private final javapolis.repository.UserRepository userRepository;
 
-    public AuthController(AuthenticationManager authenticationManager) {
+    public AuthController(AuthenticationManager authenticationManager, javapolis.repository.UserRepository userRepository) {
         this.authenticationManager = authenticationManager;
+        this.userRepository = userRepository;
     }
 
     @PostMapping("/login")
@@ -131,6 +133,12 @@ public class AuthController {
         if (isRealUser) {
             response.put("authenticated", true);
             response.put("username", auth.getName());
+            
+            // Добавляем количество монет в статус
+            userRepository.findByUsername(auth.getName()).ifPresent(user -> {
+                response.put("coins", user.getCoins());
+            });
+
             response.put("authorities", auth.getAuthorities().stream()
                 .map(Object::toString)
                 .toArray());

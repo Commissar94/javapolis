@@ -33,6 +33,7 @@ public class ProfileService {
         dto.setFirstName(user.getFirstName());
         dto.setLastName(user.getLastName());
         dto.setCreatedAt(user.getCreatedAt());
+        dto.setCoins(user.getCoins());
 
         long totalTopics = topicService.countTotalTopics();
         List<UserProgress> progress = progressRepository.findByUser(user);

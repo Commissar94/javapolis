@@ -10,6 +10,7 @@ public class UserProfileDTO {
     private long totalTopics;
     private long completedTopics;
     private int completionPercentage;
+    private int coins;
 
     public UserProfileDTO() {}
 
@@ -34,4 +35,7 @@ public class UserProfileDTO {
 
     public int getCompletionPercentage() { return completionPercentage; }
     public void setCompletionPercentage(int completionPercentage) { this.completionPercentage = completionPercentage; }
+
+    public int getCoins() { return coins; }
+    public void setCoins(int coins) { this.coins = coins; }
 }

@@ -40,13 +40,30 @@ public class CommentController {
         String topicPath = (String) payload.get("topicPath");
         Integer page = (Integer) payload.get("page");
         String content = (String) payload.get("content");
+        Number parentIdNum = (Number) payload.get("parentId");
+        Long parentId = parentIdNum != null ? parentIdNum.longValue() : null;
 
         if (content == null || content.isBlank()) {
             return ResponseEntity.badRequest().body("Комментарий не может быть пустым");
         }
 
-        CommentDto comment = commentService.addComment(topicPath, page != null ? page : 0, content, user);
+        CommentDto comment = commentService.addComment(topicPath, page != null ? page : 0, content, user, parentId);
         return ResponseEntity.ok(comment);
+    }
+
+    @PostMapping("/{id}/like")
+    public ResponseEntity<?> likeComment(@PathVariable Long id) {
+        User user = getCurrentUser();
+        if (user == null) {
+            return ResponseEntity.status(401).body("Нужно авторизоваться, чтобы лайкать");
+        }
+
+        try {
+            CommentDto comment = commentService.likeComment(id, user);
+            return ResponseEntity.ok(comment);
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     private User getCurrentUser() {

@@ -26,6 +26,20 @@ public class Comment {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    @Column(nullable = false)
+    private int likes = 0;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Comment parent;
+
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("createdAt ASC")
+    private java.util.List<Comment> replies = new java.util.ArrayList<>();
+
+    @OneToMany(mappedBy = "comment", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<CommentLike> commentLikes = new java.util.ArrayList<>();
+
     public Comment() {}
 
     public Comment(String topicPath, int page, String content, User user) {
@@ -82,5 +96,37 @@ public class Comment {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public int getLikes() {
+        return likes;
+    }
+
+    public void setLikes(int likes) {
+        this.likes = likes;
+    }
+
+    public java.util.List<CommentLike> getCommentLikes() {
+        return commentLikes;
+    }
+
+    public void setCommentLikes(java.util.List<CommentLike> commentLikes) {
+        this.commentLikes = commentLikes;
+    }
+
+    public Comment getParent() {
+        return parent;
+    }
+
+    public void setParent(Comment parent) {
+        this.parent = parent;
+    }
+
+    public java.util.List<Comment> getReplies() {
+        return replies;
+    }
+
+    public void setReplies(java.util.List<Comment> replies) {
+        this.replies = replies;
     }
 }

@@ -12,15 +12,91 @@
       Пока нет комментариев. Будьте первым!
     </div>
     <div v-else class="comments-list">
-      <div v-for="comment in comments" :key="comment.id" class="comment-item">
-        <div class="comment-meta">
-          <span class="comment-author">
-            <router-link :to="'/profile/' + comment.authorUsername">{{ comment.authorName }}</router-link>
-          </span>
-          <span class="comment-date">{{ formatDate(comment.createdAt) }}</span>
+      <div v-for="comment in comments" :key="comment.id" class="comment-wrapper">
+        <div class="comment-item">
+          <div class="comment-meta">
+            <span class="comment-author">
+              <router-link :to="'/profile/' + comment.authorUsername">{{ comment.authorName }}</router-link>
+            </span>
+            <span class="comment-date">{{ formatDate(comment.createdAt) }}</span>
+          </div>
+          <div class="comment-content">
+            {{ comment.content }}
+          </div>
+          <div class="comment-actions">
+            <button 
+              v-if="isAuthenticated && comment.authorUsername !== currentUser?.username" 
+              class="like-btn" 
+              :class="{ 'already-liked': isAlreadyLiked(comment) }"
+              @click="likeComment(comment)"
+              :disabled="isAlreadyLiked(comment)"
+              :title="getLikersTitle(comment)"
+            >
+              <i class="fas fa-coins"></i> {{ comment.likes || 0 }}
+            </button>
+            <span v-else class="likes-count" :title="getLikersTitle(comment)">
+              <i class="fas fa-coins"></i> {{ comment.likes || 0 }}
+            </span>
+
+            <button 
+              v-if="isAuthenticated" 
+              class="reply-btn"
+              @click="toggleReply(comment.id)"
+            >
+              Ответить
+            </button>
+          </div>
+
+          <!-- Форма ответа (вложенная) -->
+          <div v-if="replyingTo === comment.id" class="reply-form">
+            <textarea 
+              v-model="replyContent" 
+              placeholder="Напишите ваш ответ..." 
+              rows="2"
+              ref="replyTextarea"
+            ></textarea>
+            <div class="reply-actions">
+              <button class="cancel-btn" @click="replyingTo = null">Отмена</button>
+              <button 
+                class="submit-reply-btn" 
+                :disabled="submittingReply || !replyContent.trim()"
+                @click="submitReply(comment)"
+              >
+                <span v-if="submittingReply"><i class="fas fa-spinner fa-spin"></i></span>
+                <span v-else>Ответить</span>
+              </button>
+            </div>
+          </div>
         </div>
-        <div class="comment-content">
-          {{ comment.content }}
+
+        <!-- Вложенные ответы -->
+        <div v-if="comment.replies && comment.replies.length > 0" class="comment-replies">
+          <div v-for="reply in comment.replies" :key="reply.id" class="comment-item reply-item">
+            <div class="comment-meta">
+              <span class="comment-author">
+                <router-link :to="'/profile/' + reply.authorUsername">{{ reply.authorName }}</router-link>
+              </span>
+              <span class="comment-date">{{ formatDate(reply.createdAt) }}</span>
+            </div>
+            <div class="comment-content">
+              {{ reply.content }}
+            </div>
+            <div class="comment-actions">
+              <button 
+                v-if="isAuthenticated && reply.authorUsername !== currentUser?.username" 
+                class="like-btn" 
+                :class="{ 'already-liked': isAlreadyLiked(reply) }"
+                @click="likeComment(reply, comment)"
+                :disabled="isAlreadyLiked(reply)"
+                :title="getLikersTitle(reply)"
+              >
+                <i class="fas fa-coins"></i> {{ reply.likes || 0 }}
+              </button>
+              <span v-else class="likes-count" :title="getLikersTitle(reply)">
+                <i class="fas fa-coins"></i> {{ reply.likes || 0 }}
+              </span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -73,15 +149,25 @@ const comments = ref([])
 const loading = ref(false)
 const submitting = ref(false)
 const newComment = ref('')
+const replyingTo = ref(null)
+const replyContent = ref('')
+const submittingReply = ref(false)
 const isAuthenticated = ref(false)
+const currentUser = ref(null)
 const error = ref('')
 
 const fetchAuthStatus = async () => {
   try {
     const res = await axios.get('/api/auth/status')
     isAuthenticated.value = res.data.authenticated
+    if (res.data.authenticated) {
+      currentUser.value = {
+        username: res.data.username
+      }
+    }
   } catch (e) {
     isAuthenticated.value = false
+    currentUser.value = null
   }
 }
 
@@ -116,12 +202,77 @@ const submitComment = async () => {
       page: props.page,
       content: newComment.value
     })
-    comments.value.unshift(res.data)
+    // Новый основной комментарий всегда в начало
+    comments.value.unshift({
+      ...res.data,
+      replies: []
+    })
     newComment.value = ''
   } catch (e) {
     error.value = e.response?.data || 'Не удалось отправить комментарий'
   } finally {
     submitting.value = false
+  }
+}
+
+const toggleReply = (commentId) => {
+  if (replyingTo.value === commentId) {
+    replyingTo.value = null
+  } else {
+    replyingTo.value = commentId
+    replyContent.value = ''
+  }
+}
+
+const submitReply = async (parentComment) => {
+  if (!replyContent.value.trim()) return
+  
+  submittingReply.value = true
+  try {
+    const cleanPath = props.topicPath.replace('.md', '')
+    const res = await axios.post('/api/comments', {
+      topicPath: cleanPath,
+      page: props.page,
+      content: replyContent.value,
+      parentId: parentComment.id
+    })
+    
+    // Добавляем ответ в список ответов родителя
+    if (!parentComment.replies) parentComment.replies = []
+    parentComment.replies.push(res.data)
+    
+    replyContent.value = ''
+    replyingTo.value = null
+  } catch (e) {
+    alert(e.response?.data || 'Не удалось отправить ответ')
+  } finally {
+    submittingReply.value = false
+  }
+}
+
+const likeComment = async (comment, parentComment = null) => {
+  try {
+    const res = await axios.post(`/api/comments/${comment.id}/like`)
+    
+    if (parentComment) {
+      // Обновляем лайк во вложенном ответе
+      const index = parentComment.replies.findIndex(r => r.id === comment.id)
+      if (index !== -1) {
+        parentComment.replies[index].likes = res.data.likes
+        parentComment.replies[index].likers = res.data.likers
+      }
+    } else {
+      // Обновляем лайк в основном комментарии
+      const index = comments.value.findIndex(c => c.id === comment.id)
+      if (index !== -1) {
+        comments.value[index].likes = res.data.likes
+        comments.value[index].likers = res.data.likers
+      }
+    }
+    
+    window.dispatchEvent(new CustomEvent('coins-updated'))
+  } catch (e) {
+    alert(e.response?.data || 'Не удалось поставить лайк')
   }
 }
 
@@ -135,6 +286,21 @@ const formatDate = (dateStr) => {
     hour: '2-digit',
     minute: '2-digit'
   })
+}
+
+const getLikersTitle = (comment) => {
+  if (isAlreadyLiked(comment)) {
+    return 'Вы уже поддержали этот комментарий'
+  }
+  if (!comment.likers || comment.likers.length === 0) {
+    return comment.authorUsername === currentUser.value?.username ? 'Ваш комментарий' : 'Отдать 1 полис'
+  }
+  const likersList = comment.likers.join(', ')
+  return `Полисы от: ${likersList}`
+}
+
+const isAlreadyLiked = (comment) => {
+  return comment.likers && currentUser.value && comment.likers.includes(currentUser.value.username)
 }
 
 onMounted(() => {
@@ -206,6 +372,126 @@ watch(() => [props.topicPath, props.page], () => {
   line-height: 1.5;
   color: var(--text-color);
   white-space: pre-wrap;
+  margin-bottom: 10px;
+}
+
+.comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.reply-btn {
+  background: none;
+  border: none;
+  color: var(--accent-color);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0;
+  font-weight: 500;
+}
+
+.reply-btn:hover {
+  text-decoration: underline;
+}
+
+.reply-form {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px dashed var(--border-color);
+}
+
+.reply-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.cancel-btn {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.submit-reply-btn {
+  background: var(--accent-color);
+  color: white;
+  border: none;
+  padding: 6px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.submit-reply-btn:disabled {
+  opacity: 0.6;
+}
+
+.comment-replies {
+  margin-left: 40px;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-left: 2px solid var(--border-color);
+  padding-left: 20px;
+}
+
+.reply-item {
+  border-left: 3px solid var(--accent-color);
+  font-size: 0.95rem;
+  padding: 10px 15px;
+}
+
+.like-btn {
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  color: var(--text-color);
+  padding: 4px 10px;
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.like-btn:hover {
+  background: rgba(255, 215, 0, 0.2);
+  transform: scale(1.05);
+}
+
+.like-btn.already-liked {
+  background: rgba(255, 215, 0, 0.3);
+  border-color: #ffd700;
+  cursor: default;
+  transform: none;
+}
+
+.like-btn:disabled {
+  opacity: 1;
+}
+
+.like-btn i {
+  color: #ffd700;
+}
+
+.likes-count {
+  font-size: 0.85rem;
+  color: var(--text-color);
+  opacity: 0.7;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+}
+
+.likes-count i {
+  color: #ffd700;
 }
 
 .no-comments, .comments-loading {

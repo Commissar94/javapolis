@@ -14,6 +14,11 @@
         <div class="profile-info">
           <h1>{{ profile.firstName && profile.lastName ? `${profile.firstName} ${profile.lastName}` : profile.username }}</h1>
           <p class="username">@{{ profile.username }}</p>
+          <div class="coins-container" :title="`${profile.coins} ${getPolisWord(profile.coins)}`">
+            <i class="fas fa-coins coin-icon"></i>
+            <span class="coins-value">{{ profile.coins }}</span>
+            <span class="coins-label">{{ getPolisWord(profile.coins) }}</span>
+          </div>
           <p class="join-date">На сайте с {{ formatDate(profile.createdAt) }}</p>
         </div>
       </div>
@@ -83,6 +88,12 @@ const formatDate = (dateStr) => {
   })
 }
 
+const getPolisWord = (count) => {
+  const cases = [2, 0, 1, 1, 1, 2]
+  const words = ['полис', 'полиса', 'полисов']
+  return words[(count % 100 > 4 && count % 100 < 20) ? 2 : cases[(count % 10 < 5) ? count % 10 : 5]]
+}
+
 onMounted(fetchProfile)
 
 watch(() => route.params.username, fetchProfile)
@@ -124,7 +135,42 @@ watch(() => route.params.username, fetchProfile)
 .username {
   color: var(--accent-color);
   font-weight: 600;
-  margin: 0 0 10px 0;
+  margin: 0 0 5px 0;
+}
+
+.coins-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 215, 0, 0.1);
+  padding: 5px 12px;
+  border-radius: 20px;
+  width: fit-content;
+  margin-bottom: 10px;
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.coin-icon {
+  color: #ffd700;
+  text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+  animation: pulse 2s infinite;
+}
+
+.coins-value {
+  font-weight: 700;
+  color: var(--header-color);
+}
+
+.coins-label {
+  font-size: 0.9rem;
+  color: var(--text-color);
+  opacity: 0.8;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
 }
 
 .join-date {

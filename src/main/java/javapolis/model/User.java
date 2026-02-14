@@ -49,6 +49,9 @@ public class User {
     @Column(name = "enabled")
     private boolean enabled = true;
     
+    @Column(name = "coins", nullable = false)
+    private int coins = 10;
+    
     // Конструкторы
     public User() {
         this.createdAt = LocalDateTime.now();
@@ -164,6 +167,14 @@ public class User {
     
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+    }
+    
+    public int getCoins() {
+        return coins;
+    }
+    
+    public void setCoins(int coins) {
+        this.coins = coins;
     }
     
     // Методы

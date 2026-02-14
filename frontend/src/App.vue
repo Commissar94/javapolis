@@ -9,12 +9,18 @@
       
       <div class="nav-right">
         <template v-if="user">
-          <router-link :to="'/profile/' + user.username" class="username-link">
-            <span class="username">
-              <i class="fas fa-user"></i>
-              {{ user.username }}
-            </span>
-          </router-link>
+          <div class="nav-user-info">
+            <div class="nav-coins" :title="`${user.coins} ${getPolisWord(user.coins)}`" v-if="user.coins !== undefined">
+              <i class="fas fa-coins coin-icon"></i>
+              <span class="coins-value">{{ user.coins }}</span>
+            </div>
+            <router-link :to="'/profile/' + user.username" class="username-link">
+              <span class="username">
+                <i class="fas fa-user"></i>
+                {{ user.username }}
+              </span>
+            </router-link>
+          </div>
           <button @click="handleLogout" class="auth-btn logout">Выйти</button>
         </template>
         <template v-else>
@@ -62,21 +68,33 @@ onMounted(async () => {
     theme.value = 'dark'
   }
   await checkAuthStatus()
+  
+  // Слушаем обновление баланса
+  window.addEventListener('coins-updated', checkAuthStatus)
 })
 
 const checkAuthStatus = async () => {
   try {
     const response = await axios.get('/api/auth/status')
     if (response.data.authenticated) {
-      user.value = { username: response.data.username }
+      user.value = { 
+        username: response.data.username,
+        coins: response.data.coins
+      }
     }
   } catch (e) {
     console.error('Failed to check auth status', e)
   }
 }
 
-const handleLoginSuccess = (username) => {
-  user.value = { username }
+const handleLoginSuccess = async (username) => {
+  await checkAuthStatus()
+}
+
+const getPolisWord = (count) => {
+  const cases = [2, 0, 1, 1, 1, 2]
+  const words = ['полис', 'полиса', 'полисов']
+  return words[(count % 100 > 4 && count % 100 < 20) ? 2 : cases[(count % 10 < 5) ? count % 10 : 5]]
 }
 
 const handleLogout = async () => {
@@ -194,6 +212,41 @@ nav {
   display: flex;
   align-items: center;
   gap: 15px;
+}
+
+.nav-user-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.nav-coins {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 215, 0, 0.1);
+  padding: 4px 10px;
+  border-radius: 15px;
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  font-size: 0.9rem;
+  cursor: default;
+}
+
+.nav-coins .coin-icon {
+  color: #ffd700;
+  font-size: 0.85rem;
+  animation: nav-pulse 2s infinite;
+}
+
+.nav-coins .coins-value {
+  font-weight: 700;
+  color: var(--text-color);
+}
+
+@keyframes nav-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
 }
 
 .username-link {
