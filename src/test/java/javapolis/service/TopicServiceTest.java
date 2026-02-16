@@ -128,5 +128,21 @@ public class TopicServiceTest {
             .filter(s -> s.getName().equals("basics"))
             .findFirst().get();
         assertFalse(basics.getChildren().isEmpty(), "Basics folder should not be empty");
+
+        // Проверяем очистку имен (предусловие: папка "Первый проект" содержит "1_Приветствие.md")
+        TopicStructure firstProject = structure.stream()
+            .filter(s -> s.getName().equals("Первый проект"))
+            .findFirst().orElse(null);
+        
+        if (firstProject != null) {
+            boolean hasGreeting = firstProject.getChildren().stream()
+                .anyMatch(s -> s.getName().equals("Приветствие"));
+            assertTrue(hasGreeting, "Topic '1_Приветствие' should be cleaned to 'Приветствие'");
+            
+            TopicStructure greeting = firstProject.getChildren().stream()
+                .filter(s -> s.getName().equals("Приветствие"))
+                .findFirst().get();
+            assertEquals("Первый проект/1_Приветствие.md", greeting.getPath(), "Path should remain original");
+        }
     }
 }

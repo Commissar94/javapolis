@@ -92,7 +92,7 @@ public class TopicService {
             String currentRelativePath = relativePath.isEmpty() ? name : relativePath + "/" + name;
             
             if (file.isDirectory()) {
-                TopicStructure folder = new TopicStructure(name, "folder", currentRelativePath);
+                TopicStructure folder = new TopicStructure(cleanName(name), "folder", currentRelativePath);
                 folder.setChildren(scanDirectory(file, currentRelativePath));
                 // По умолчанию разворачиваем папки
                 folder.setExpanded(true);
@@ -100,20 +100,25 @@ public class TopicService {
                     result.add(folder);
                 }
             } else if (name.endsWith(".md")) {
-                String topicName = name.substring(0, name.length() - 3);
+                String topicName = cleanName(name.substring(0, name.length() - 3));
                 result.add(new TopicStructure(topicName, "file", currentRelativePath));
             }
         }
         
-        // Сортируем: сначала папки, потом файлы, по имени
+        // Сортируем: сначала папки, потом файлы, по оригинальному пути (чтобы учитывать цифры в начале)
         result.sort((a, b) -> {
             if (a.getType().equals(b.getType())) {
-                return a.getName().compareToIgnoreCase(b.getName());
+                return a.getPath().compareToIgnoreCase(b.getPath());
             }
             return a.getType().equals("folder") ? -1 : 1;
         });
         
         return result;
+    }
+
+    private String cleanName(String name) {
+        // Убираем префиксы типа "1_", "01-", "1. "
+        return name.replaceFirst("^[0-9]+[_\\-\\. ]+", "");
     }
     
     public Map<String, Object> getTopicContent(String topicPath, int page) throws IOException {
