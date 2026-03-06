@@ -142,7 +142,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick, watch, computed, inject } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, watch, computed, inject } from 'vue'
 import axios from 'axios'
 import { useRoute, useRouter } from 'vue-router'
 import TopicTreeItem from '../components/TopicTreeItem.vue'
@@ -197,6 +197,12 @@ onMounted(async () => {
     const res = await axios.get('/api/university/structure')
     structure.value = res.data
     
+    // Подписываемся на скролл
+    const contentEl = document.querySelector('.content')
+    if (contentEl) {
+      contentEl.addEventListener('scroll', handleScroll)
+    }
+    
     // Если в URL уже есть путь к топику, загружаем его
     const path = route.params.pathMatch
     if (path) {
@@ -210,6 +216,13 @@ onMounted(async () => {
     }
   } catch (e) {
     console.error('Failed to load structure', e)
+  }
+})
+
+onUnmounted(() => {
+  const contentEl = document.querySelector('.content')
+  if (contentEl) {
+    contentEl.removeEventListener('scroll', handleScroll)
   }
 })
 
@@ -284,13 +297,41 @@ const loadTopic = async (path, page = 0) => {
       
       // Скроллим вверх при смене страницы
       const contentEl = document.querySelector('.content')
-      if (contentEl) contentEl.scrollTop = 0
+      if (contentEl) {
+        contentEl.scrollTop = 0
+        // При смене страницы сразу проверяем скролл (если страница короткая)
+        handleScroll()
+      }
     })
 
-    // Отмечаем прогресс
-    markPageAsCompleted(cleanPath, page, res.data.totalPages);
+    // Удаляем немедленную отметку прогресса
+    // markPageAsCompleted(cleanPath, page, res.data.totalPages);
   } catch (e) {
     console.error('Failed to load topic', e)
+  }
+}
+
+const handleScroll = () => {
+  if (!currentTopic.value || !user.value) return
+  
+  const contentEl = document.querySelector('.content')
+  if (!contentEl) return
+
+  // Проверяем, является ли текущая страница последней
+  const isLastPage = currentPage.value === totalPages.value - 1
+  if (!isLastPage) return
+
+  // Проверяем, отмечена ли уже эта страница как прочитанная
+  if (completedPages.value.includes(currentPage.value)) return
+
+  // Расчет: высота прокрутки + видимая высота >= полная высота контента - небольшой запас
+  const threshold = 50 // пикселей до конца
+  const isAtBottom = contentEl.scrollTop + contentEl.clientHeight >= contentEl.scrollHeight - threshold
+
+  if (isAtBottom) {
+    const stringPath = currentTopic.value.path
+    const cleanPath = stringPath.replace('.md', '')
+    markPageAsCompleted(cleanPath, currentPage.value, totalPages.value)
   }
 }
 
@@ -1291,7 +1332,8 @@ li:hover {
 .courses-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 25px;
+  gap: 30px;
+  row-gap: 40px;
   margin-bottom: 50px;
 }
 
@@ -1393,6 +1435,7 @@ li:hover {
 @media (max-width: 767px) {
   .courses-grid {
     grid-template-columns: 1fr;
+    row-gap: 30px;
   }
 }
 </style>

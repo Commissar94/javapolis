@@ -14,35 +14,29 @@
           <div class="building-base"></div>
         </div>
 
-        <!-- Библиотека (Заглушка) -->
-        <div class="building-wrapper construction" @click="showConstructionNotice('Библиотека')">
-          <div class="building-label">Библиотека</div>
-          <div class="building-status">Стройка идет...</div>
+        <!-- Музей -->
+        <div class="building-wrapper museum-building" @click="router.push('/museum')">
+          <div class="building-label">Музей</div>
           <div class="building-icon">
-            <i class="fas fa-book-reader"></i>
-            <div class="crane"><i class="fas fa-tools"></i></div>
+            <i class="fas fa-museum"></i>
           </div>
           <div class="building-base"></div>
         </div>
 
-        <!-- Мэрия (Заглушка) -->
-        <div class="building-wrapper construction" @click="showConstructionNotice('Мэрия')">
-          <div class="building-label">Мэрия</div>
-          <div class="building-status">Стройка идет...</div>
+        <!-- Форум -->
+        <div class="building-wrapper forum-building" @click="router.push('/forum')">
+          <div class="building-label">Форум разработчиков</div>
           <div class="building-icon">
-            <i class="fas fa-landmark"></i>
-            <div class="crane"><i class="fas fa-tools"></i></div>
+            <i class="fas fa-comments"></i>
           </div>
           <div class="building-base"></div>
         </div>
 
-        <!-- Мастерская (Заглушка) -->
-        <div class="building-wrapper construction" @click="showConstructionNotice('Мастерская')">
-          <div class="building-label">Мастерская</div>
-          <div class="building-status">Стройка идет...</div>
+        <!-- Бизнес центр -->
+        <div class="building-wrapper business-building" @click="router.push('/business')">
+          <div class="building-label">Бизнес центр</div>
           <div class="building-icon">
-            <i class="fas fa-tools"></i>
-            <div class="crane"><i class="fas fa-tools"></i></div>
+            <i class="fas fa-briefcase"></i>
           </div>
           <div class="building-base"></div>
         </div>
@@ -179,6 +173,11 @@ const showConstructionNotice = (name) => {
   z-index: 2;
 }
 
+.university-building .building-label { border-color: var(--accent-color); }
+.museum-building .building-label { border-color: #f39c12; }
+.forum-building .building-label { border-color: #42b983; }
+.business-building .building-label { border-color: #38bdf8; }
+
 .building-status {
   position: absolute;
   bottom: -25px;
@@ -205,10 +204,25 @@ const showConstructionNotice = (name) => {
   z-index: 1;
 }
 
-.university-building .building-icon {
+.university-building .building-icon,
+.museum-building .building-icon,
+.forum-building .building-icon,
+.business-building .building-icon {
   background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
   border-color: var(--accent-color);
   color: #fff;
+}
+
+.museum-building .building-icon {
+  border-color: #f39c12;
+}
+
+.forum-building .building-icon {
+  border-color: #42b983;
+}
+
+.business-building .building-icon {
+  border-color: #38bdf8;
 }
 
 .building-base {

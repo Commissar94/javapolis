@@ -31,9 +31,8 @@ public class ProgressService {
         
         progress.setCompletedPages(pagesStr);
         
-        // Если все страницы пройдены (или хотя бы их количество совпадает с общим, 
-        // для простоты считаем по уникальным номерам страниц)
-        if (completedPages.size() >= totalPages) {
+        // Лекция считается пройденной, если отмечена последняя страница
+        if (page == totalPages - 1) {
             progress.setCompleted(true);
         }
 

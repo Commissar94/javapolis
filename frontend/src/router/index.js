@@ -23,6 +23,21 @@ const routes = [
     ]
   },
   {
+    path: '/museum',
+    name: 'Museum',
+    component: () => import('../views/Museum.vue')
+  },
+  {
+    path: '/forum',
+    name: 'Forum',
+    component: () => import('../views/Forum.vue')
+  },
+  {
+    path: '/business',
+    name: 'BusinessCenter',
+    component: () => import('../views/BusinessCenter.vue')
+  },
+  {
     path: '/profile/:username',
     name: 'Profile',
     component: () => import('../views/Profile.vue')

@@ -34,8 +34,6 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        System.out.println("🔒 Настройка Spring Security...");
-        
         http
             .csrf(AbstractHttpConfigurer::disable)
             .addFilterBefore(new SessionAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
@@ -44,15 +42,12 @@ public class SecurityConfig {
                 .requestMatchers("/university/**", "/api/university/**").permitAll()
                 .requestMatchers("/api/auth/status").permitAll()
                 .requestMatchers("/static/**", "/css/**", "/js/**", "/images/**", "/assets/**").permitAll()
-                .requestMatchers("/dashboard", "/city", "/api/dashboard", "/api/city").authenticated()
+                .requestMatchers("/dashboard", "/city", "/api/dashboard", "/api/city", "/api/forum/**", "/api/business/**").authenticated()
                 .anyRequest().permitAll()
             )
             .addFilterAfter(new OncePerRequestFilter() {
                 @Override
                 protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
-                    System.out.println("🔐 Проверка доступа к: " + request.getRequestURI());
-                    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-                    System.out.println("Пользователь: " + (auth != null ? auth.getName() + " (аутентифицирован: " + auth.isAuthenticated() + ")" : "не аутентифицирован"));
                     filterChain.doFilter(request, response);
                 }
             }, UsernamePasswordAuthenticationFilter.class)
@@ -81,7 +76,6 @@ public class SecurityConfig {
         // Для H2 консоли
         http.headers(headers -> headers.frameOptions().disable());
         
-        System.out.println("✅ Spring Security настроен");
         return http.build();
     }
 
@@ -95,8 +89,6 @@ public class SecurityConfig {
         return new UserDetailsService() {
             @Override
             public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-                System.out.println("🔍 Загрузка пользователя: " + username);
-                
                 // Сначала проверяем базу данных
                 try {
                     User user = userRepository.findByUsername(username)
@@ -122,12 +114,11 @@ public class SecurityConfig {
                             .build();
                     }
                 } catch (Exception e) {
-                    System.out.println("Ошибка загрузки пользователя из БД: " + e.getMessage());
+                    // Ошибка загрузки пользователя из БД
                 }
                 
                             // Если пользователь не найден в БД, создаем временного админа
             if ("admin".equals(username)) {
-                System.out.println("🔑 Создаем временного админа: admin/admin");
                 return org.springframework.security.core.userdetails.User.builder()
                     .username("admin")
                     .password(passwordEncoder.encode("admin"))

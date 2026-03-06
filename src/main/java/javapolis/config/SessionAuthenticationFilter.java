@@ -19,8 +19,6 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         
-        System.out.println("🔍 Фильтр аутентификации для: " + request.getRequestURI());
-        
         // Проверяем, есть ли аутентификация в текущем контексте
         Authentication currentAuth = SecurityContextHolder.getContext().getAuthentication();
         
@@ -28,18 +26,13 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
             // Если нет, пытаемся восстановить из сессии
             HttpSession session = request.getSession(false);
             if (session != null) {
-                System.out.println("📋 Сессия найдена: " + session.getId());
                 Object securityContext = session.getAttribute("SPRING_SECURITY_CONTEXT");
                 if (securityContext != null) {
-                    System.out.println("🔐 Контекст безопасности найден в сессии");
                     if (securityContext instanceof SecurityContext) {
                         SecurityContext context = (SecurityContext) securityContext;
                         Authentication auth = context.getAuthentication();
                         if (auth != null && auth.isAuthenticated()) {
                             SecurityContextHolder.setContext(context);
-                            System.out.println("✅ Восстановлена аутентификация из сессии для: " + auth.getName());
-                        } else {
-                            System.out.println("❌ Аутентификация в сессии недействительна");
                         }
                     } else if (securityContext instanceof org.springframework.security.core.context.SecurityContext) {
                         org.springframework.security.core.context.SecurityContext context = 
@@ -47,19 +40,10 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
                         Authentication auth = context.getAuthentication();
                         if (auth != null && auth.isAuthenticated()) {
                             SecurityContextHolder.setContext(context);
-                            System.out.println("✅ Восстановлена аутентификация из сессии для: " + auth.getName());
-                        } else {
-                            System.out.println("❌ Аутентификация в сессии недействительна");
                         }
                     }
-                } else {
-                    System.out.println("❌ Контекст безопасности не найден в сессии");
                 }
-            } else {
-                System.out.println("❌ Сессия не найдена");
             }
-        } else {
-            System.out.println("✅ Аутентификация уже активна для: " + currentAuth.getName());
         }
         
         filterChain.doFilter(request, response);
