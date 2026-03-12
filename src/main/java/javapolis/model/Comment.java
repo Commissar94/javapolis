@@ -16,8 +16,11 @@ public class Comment {
     @Column(nullable = false)
     private int page;
 
-    @Column(nullable = false, columnDefinition = "TEXT")
+    @Column(nullable = true, columnDefinition = "TEXT")
     private String content;
+
+    @Column
+    private String imageUrl;
 
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "user_id", nullable = false)
@@ -42,12 +45,21 @@ public class Comment {
 
     public Comment() {}
 
-    public Comment(String topicPath, int page, String content, User user) {
+    public Comment(String topicPath, int page, String content, User user, String imageUrl) {
         this.topicPath = topicPath;
         this.page = page;
         this.content = content;
         this.user = user;
+        this.imageUrl = imageUrl;
         this.createdAt = LocalDateTime.now();
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public Long getId() {

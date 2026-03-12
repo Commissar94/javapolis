@@ -40,14 +40,15 @@ public class CommentController {
         String topicPath = (String) payload.get("topicPath");
         Integer page = (Integer) payload.get("page");
         String content = (String) payload.get("content");
+        String imageUrl = (String) payload.get("imageUrl");
         Number parentIdNum = (Number) payload.get("parentId");
         Long parentId = parentIdNum != null ? parentIdNum.longValue() : null;
 
-        if (content == null || content.isBlank()) {
+        if ((content == null || content.isBlank()) && (imageUrl == null || imageUrl.isBlank())) {
             return ResponseEntity.badRequest().body("Комментарий не может быть пустым");
         }
 
-        CommentDto comment = commentService.addComment(topicPath, page != null ? page : 0, content, user, parentId);
+        CommentDto comment = commentService.addComment(topicPath, page != null ? page : 0, content, user, parentId, imageUrl);
         return ResponseEntity.ok(comment);
     }
 

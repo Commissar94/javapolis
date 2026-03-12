@@ -13,5 +13,6 @@ public record CommentDto(
     int likes,
     List<String> likers,
     List<CommentDto> replies,
-    Long parentId
+    Long parentId,
+    String imageUrl
 ) {}

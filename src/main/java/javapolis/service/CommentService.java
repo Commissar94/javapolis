@@ -34,8 +34,8 @@ public class CommentService {
     }
 
     @Transactional
-    public CommentDto addComment(String topicPath, int page, String content, User user, Long parentId) {
-        Comment comment = new Comment(topicPath, page, content, user);
+    public CommentDto addComment(String topicPath, int page, String content, User user, Long parentId, String imageUrl) {
+        Comment comment = new Comment(topicPath, page, content, user, imageUrl);
         if (parentId != null) {
             Comment parent = commentRepository.findById(parentId)
                     .orElseThrow(() -> new RuntimeException("Родительский комментарий не найден"));
@@ -105,7 +105,8 @@ public class CommentService {
                 comment.getLikes(),
                 likers,
                 replies,
-                comment.getParent() != null ? comment.getParent().getId() : null
+                comment.getParent() != null ? comment.getParent().getId() : null,
+                comment.getImageUrl()
         );
     }
 }

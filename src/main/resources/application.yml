@@ -15,6 +15,10 @@
   flyway:
     enabled: true
     baseline-on-migrate: true
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 2MB
 #  h2:
 #    console:
 #      enabled: true
