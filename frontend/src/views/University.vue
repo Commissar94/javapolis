@@ -26,8 +26,6 @@
       <div class="content">
         <div class="content-inner">
           <div v-if="currentTopic && user">
-            <h2 class="topic-title">{{ currentTopic.name }}</h2>
-            
             <!-- Мини-пагинация сверху -->
             <div v-if="totalPages > 1" class="top-pagination">
               <div class="page-numbers">
@@ -724,15 +722,6 @@ const expandFoldersToPath = (items, targetPath) => {
   background-color: transparent !important;
 }
 
-.topic-title {
-  font-size: 2.5em;
-  font-weight: 800;
-  color: var(--text-color);
-  margin-bottom: 30px;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 20px;
-}
-
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -1220,12 +1209,15 @@ const expandFoldersToPath = (items, targetPath) => {
   font-size: 0.95em;
   line-height: 1.5;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+}
+
+.markdown-body :deep(.tip p), .markdown-body :deep(.warning p), .markdown-body :deep(.info p), .markdown-body :deep(.success p) {
+  margin: 0;
 }
 
 .markdown-body :deep(.tip i), .markdown-body :deep(.warning i), .markdown-body :deep(.info i), .markdown-body :deep(.success i) {
   margin-right: 12px;
-  margin-top: 2px;
   font-size: 1.2em;
   flex-shrink: 0;
 }

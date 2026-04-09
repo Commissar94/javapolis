@@ -123,29 +123,10 @@
         }
 
         .main-content {
-            padding: 40px;
+            padding: 20px 40px 40px 40px;
             background: white;
         }
 
-        .topic-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px;
-            border-radius: 15px;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        .topic-header h2 {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .topic-header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
 
         .topic-content {
             line-height: 1.8;
@@ -154,12 +135,17 @@
 
         /* Стили для подсказок и уведомлений */
         .tip, .warning, .info, .success {
-            padding: 20px;
+            padding: 15px 20px;
             border-radius: 10px;
             margin: 25px 0;
-            position: relative;
+            display: flex;
+            align-items: center;
             border-left: 5px solid;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .tip p, .warning p, .info p, .success p {
+            margin: 0;
         }
         
         .tip {
@@ -187,8 +173,9 @@
         }
         
         .tip i, .warning i, .info i, .success i {
-            margin-right: 10px;
-            font-size: 18px;
+            margin-right: 15px;
+            font-size: 20px;
+            flex-shrink: 0;
         }
         
         .tip i {
@@ -373,10 +360,6 @@
             </div>
 
             <div class="main-content">
-                <div class="topic-header">
-                    <h2 th:text="${currentTopic != null ? currentTopic.name : 'Лекция'}">Название лекции</h2>
-                    <p>Изучайте материал в удобном для вас темпе</p>
-                </div>
 
                 <div class="topic-content" th:utext="${topicContent}">
                     <!-- Здесь будет содержимое лекции -->
