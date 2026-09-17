@@ -1,0 +1,33 @@
+name: Coliseum course tests
+
+on:
+  pull_request:
+    paths:
+      - 'courses/coliseum/**'
+      - 'pom.xml'
+      - 'src/**'
+      - '.github/workflows/coliseum-course.yml'
+  push:
+    paths:
+      - 'courses/coliseum/**'
+      - 'pom.xml'
+      - 'src/**'
+      - '.github/workflows/coliseum-course.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  examples:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Run JUnit tests, including course examples and scenarios
+        run: mvn --batch-mode --no-transfer-progress -Dskip.installnodenpm -Dskip.npm test

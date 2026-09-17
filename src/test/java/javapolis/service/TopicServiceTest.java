@@ -101,9 +101,8 @@ public class TopicServiceTest {
     @Test
     public void testGetTopicContent() throws Exception {
         TopicService service = new TopicService();
-        // Since getTopicContent reads from classpath, we can only test files that exist.
-        // Let's test "about"
-        String html = service.getTopicContent("about");
+        // Use an existing lesson that contains a collapsible block.
+        String html = service.getTopicContent("basics/variables");
         System.out.println("Full HTML output:\n" + html);
         
         assertTrue(html.contains("<div class=\"collapsible\">"), "HTML should contain collapsible div");
