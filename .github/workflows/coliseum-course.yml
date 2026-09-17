@@ -1,15 +1,17 @@
-name: Coliseum course examples
+name: Coliseum course tests
 
 on:
   pull_request:
     paths:
       - 'courses/coliseum/**'
-      - 'src/main/resources/topics/Колизей/**'
+      - 'pom.xml'
+      - 'src/**'
       - '.github/workflows/coliseum-course.yml'
   push:
     paths:
       - 'courses/coliseum/**'
-      - 'src/main/resources/topics/Колизей/**'
+      - 'pom.xml'
+      - 'src/**'
       - '.github/workflows/coliseum-course.yml'
   workflow_dispatch:
 
@@ -26,7 +28,6 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - run: python courses/coliseum/verify.py
+          cache: maven
+      - name: Run JUnit tests, including course examples and scenarios
+        run: mvn --batch-mode --no-transfer-progress -Dskip.installnodenpm -Dskip.npm test
