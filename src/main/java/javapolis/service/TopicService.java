@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,6 +26,8 @@ import java.util.regex.Matcher;
 
 @Service
 public class TopicService {
+
+    private static final Pattern TOPIC_ORDER = Pattern.compile("^([0-9]+)[_\\-. ]+");
 
     private final Parser parser;
     private final HtmlRenderer renderer;
@@ -105,15 +108,31 @@ public class TopicService {
             }
         }
         
-        // Сортируем: сначала папки, потом файлы, по оригинальному пути (чтобы учитывать цифры в начале)
-        result.sort((a, b) -> {
-            if (a.getType().equals(b.getType())) {
-                return a.getPath().compareToIgnoreCase(b.getPath());
-            }
-            return a.getType().equals("folder") ? -1 : 1;
-        });
+        // Номер главы сравниваем как число: 2_ идёт перед 10_. Пути сохраняются,
+        // чтобы не терять существующий прогресс и комментарии к первым главам.
+        result.sort(TopicService::compareTopics);
         
         return result;
+    }
+
+    static int compareTopics(TopicStructure a, TopicStructure b) {
+        if (!a.getType().equals(b.getType())) {
+            return a.isFolder() ? -1 : 1;
+        }
+        String aName = a.getPath().substring(a.getPath().lastIndexOf('/') + 1);
+        String bName = b.getPath().substring(b.getPath().lastIndexOf('/') + 1);
+        Matcher aOrder = TOPIC_ORDER.matcher(aName);
+        Matcher bOrder = TOPIC_ORDER.matcher(bName);
+        boolean aNumbered = aOrder.find();
+        boolean bNumbered = bOrder.find();
+        if (aNumbered != bNumbered) {
+            return aNumbered ? -1 : 1;
+        }
+        if (aNumbered) {
+            int order = new BigInteger(aOrder.group(1)).compareTo(new BigInteger(bOrder.group(1)));
+            if (order != 0) return order;
+        }
+        return a.getPath().compareToIgnoreCase(b.getPath());
     }
 
     private String cleanName(String name) {

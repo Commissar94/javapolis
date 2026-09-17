@@ -1,0 +1,183 @@
+{
+  "title": "Колизей 1 — от первой переменной до турнира",
+  "language": "ru",
+  "java": 21,
+  "stages": 5,
+  "chapters": [
+    {
+      "number": 1,
+      "filename": "1_О курсе.md",
+      "title": "О курсе и первый запуск",
+      "stage": 1,
+      "kind": "theory"
+    },
+    {
+      "number": 2,
+      "filename": "2_Литералы.md",
+      "title": "Литералы",
+      "stage": 1,
+      "kind": "theory"
+    },
+    {
+      "number": 3,
+      "filename": "3_Примитивы.md",
+      "title": "Типы данных",
+      "stage": 1,
+      "kind": "theory"
+    },
+    {
+      "number": 4,
+      "filename": "4_Переменные.md",
+      "title": "Переменные и присваивание",
+      "stage": 1,
+      "kind": "theory"
+    },
+    {
+      "number": 5,
+      "filename": "5_Вывод в консоль.md",
+      "title": "Вывод и склейка строк",
+      "stage": 1,
+      "kind": "theory"
+    },
+    {
+      "number": 6,
+      "filename": "6_Этап 1 Паспорт гладиатора.md",
+      "title": "Этап 1. Паспорт гладиатора",
+      "stage": 1,
+      "kind": "practice"
+    },
+    {
+      "number": 7,
+      "filename": "7_Арифметика.md",
+      "title": "Арифметика и преобразования",
+      "stage": 2,
+      "kind": "theory"
+    },
+    {
+      "number": 8,
+      "filename": "8_Сравнения и логика.md",
+      "title": "Сравнения и логика",
+      "stage": 2,
+      "kind": "theory"
+    },
+    {
+      "number": 9,
+      "filename": "9_Условия.md",
+      "title": "Условия if и else",
+      "stage": 2,
+      "kind": "theory"
+    },
+    {
+      "number": 10,
+      "filename": "10_Ошибки и отладка.md",
+      "title": "Ошибки, блоки и отладка",
+      "stage": 2,
+      "kind": "theory"
+    },
+    {
+      "number": 11,
+      "filename": "11_Этап 2 Первый удар.md",
+      "title": "Этап 2. Первый удар",
+      "stage": 2,
+      "kind": "practice"
+    },
+    {
+      "number": 12,
+      "filename": "12_Цикл while.md",
+      "title": "Цикл while",
+      "stage": 3,
+      "kind": "theory"
+    },
+    {
+      "number": 13,
+      "filename": "13_Случайный урон.md",
+      "title": "Случайный урон",
+      "stage": 3,
+      "kind": "theory"
+    },
+    {
+      "number": 14,
+      "filename": "14_Break и continue.md",
+      "title": "break и continue",
+      "stage": 3,
+      "kind": "theory"
+    },
+    {
+      "number": 15,
+      "filename": "15_Этап 3 Автоматический бой.md",
+      "title": "Этап 3. Автоматический бой",
+      "stage": 3,
+      "kind": "practice"
+    },
+    {
+      "number": 16,
+      "filename": "16_Ввод с клавиатуры.md",
+      "title": "Ввод через Scanner",
+      "stage": 4,
+      "kind": "theory"
+    },
+    {
+      "number": 17,
+      "filename": "17_Строки и команды.md",
+      "title": "Строки и проверка команд",
+      "stage": 4,
+      "kind": "theory"
+    },
+    {
+      "number": 18,
+      "filename": "18_Правила хода.md",
+      "title": "Атака, защита и лечение",
+      "stage": 4,
+      "kind": "theory"
+    },
+    {
+      "number": 19,
+      "filename": "19_Этап 4 Управляемый бой.md",
+      "title": "Этап 4. Управляемый бой",
+      "stage": 4,
+      "kind": "practice"
+    },
+    {
+      "number": 20,
+      "filename": "20_Цикл for.md",
+      "title": "Цикл for и вложенные циклы",
+      "stage": 5,
+      "kind": "theory"
+    },
+    {
+      "number": 21,
+      "filename": "21_Простые методы.md",
+      "title": "Простые методы",
+      "stage": 5,
+      "kind": "theory"
+    },
+    {
+      "number": 22,
+      "filename": "22_Параметры и return.md",
+      "title": "Параметры, return и константы",
+      "stage": 5,
+      "kind": "theory"
+    },
+    {
+      "number": 23,
+      "filename": "23_Проектируем турнир.md",
+      "title": "Правила турнира",
+      "stage": 5,
+      "kind": "theory"
+    },
+    {
+      "number": 24,
+      "filename": "24_Этап 5 Турнир.md",
+      "title": "Этап 5. Турнир",
+      "stage": 5,
+      "kind": "practice"
+    },
+    {
+      "number": 25,
+      "filename": "25_Финиш и что дальше.md",
+      "title": "Финиш и следующий шаг",
+      "stage": 5,
+      "kind": "theory"
+    }
+  ]
+}
