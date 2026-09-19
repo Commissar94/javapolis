@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#121a20">
+  <title>Завод 01 · JavaPolis</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='15' fill='%23e7ad63'/%3E%3Cpath d='M14 48V27l12 7V22l12 9V14h10v34Z' fill='%23121a20'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/factory.css"><script src="/factory.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="JavaPolis — завод"><span class="brand-mark">J<span>▰</span></span><span>JAVAPOLIS <small>ИНДУСТРИАЛЬНЫЙ РАЙОН</small></span></a>
+    <nav aria-label="Разделы"><span class="nav-current">Производство</span><button id="open-workshop" class="text-button">Мастерская кода <span>↗</span></button></nav>
+    <span id="connection" class="connection"><i></i> Локальный завод</span>
+  </header>
+  <main>
+    <section class="page-heading">
+      <div><div class="eyebrow">ПРОЕКТ 02 / ЗАВОД · ЧАСТЬ 1</div><h1>Маленький завод.<br class="mobile-only"> Большие планы<span>.</span></h1><p>От первой руды до собственной производственной линии.</p></div>
+      <button class="button secondary" id="new-shift">↻ Новая смена</button>
+    </section>
+    <section class="overview" aria-label="Ресурсы завода">
+      <div class="resource-card"><span class="resource-icon ore">◆</span><div><span class="metric-label">Железная руда</span><strong id="ore-count">0</strong></div><small>в буферах</small></div>
+      <div class="resource-card"><span class="resource-icon ingot">▰</span><div><span class="metric-label">Железные слитки</span><strong id="ingot-count">0</strong></div><small>в буферах</small></div>
+      <div class="resource-card"><span class="resource-icon plate">▱</span><div><span class="metric-label">Железные пластины</span><strong id="plate-count">0</strong></div><small>в буферах</small></div>
+      <div class="resource-card budget-card"><span class="resource-icon budget">◈</span><div><span class="metric-label">Бюджет строительства</span><strong id="budget-count">300</strong></div><small>кредитов</small></div>
+    </section>
+    <section id="offline" class="notice error" hidden>Не получается связаться с заводом. Проверь, что Java-приложение запущено. Страница подключится автоматически.</section>
+    <section id="code-error" class="notice error" hidden></section>
+    <section class="factory-layout">
+      <div class="map-panel">
+        <div class="map-toolbar"><div class="site-title"><span class="status-dot"></span> Участок A-01 <span id="scenario-label" class="pill">Песочница</span><span id="mode-label" class="pill subtle">Мой код</span></div><div class="time-controls"><span class="tick-label">ТАКТ <b id="tick-count">000</b></span><button id="step" class="icon-button" title="Один производственный такт" aria-label="Выполнить один такт">↦</button><button id="play" class="button primary">▶ Запустить</button><button id="speed" class="icon-button" aria-label="Изменить скорость">1×</button></div></div>
+        <div id="map-wrap" class="map-wrap">
+          <div class="map-coordinate top-left">СЕКТОР 49 / СЕВЕР</div><div class="map-coordinate top-right">12 × 7</div>
+          <svg id="factory-map" viewBox="0 0 1000 610" aria-label="Карта завода. Выбери здание, чтобы открыть его настройки." role="group">
+            <defs>
+              <pattern id="ground-grid" width="72" height="64" patternUnits="userSpaceOnUse"><path d="M72 0H0V64" fill="none" stroke="#ffffff" stroke-opacity=".045"/><circle cx="0" cy="0" r="1.5" fill="#77858e" fill-opacity=".35"/></pattern>
+              <pattern id="belt-texture" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M0 0L12 12M-6 6L6 18M6-6L18 6" stroke="#86949b" stroke-opacity=".25" stroke-width="3"/></pattern>
+              <radialGradient id="ground-light"><stop stop-color="#344047" stop-opacity=".45"/><stop offset="1" stop-color="#121a20" stop-opacity="0"/></radialGradient>
+              <filter id="shadow"><feDropShadow dx="0" dy="9" stdDeviation="8" flood-color="#050809" flood-opacity=".45"/></filter>
+              <symbol id="building-MINE" viewBox="0 0 88 100">
+                <ellipse cx="44" cy="85" rx="37" ry="12" fill="#0b1317" opacity=".5"/><path d="M8 65L44 45 80 65 44 86Z" fill="#52605a"/><path d="M8 65V76L44 97V86Z" fill="#263733"/><path d="M44 86L80 65V76L44 97Z" fill="#384d44"/>
+                <path d="M23 22L46 9 67 22 44 35Z" fill="#b9d4bb"/><path d="M23 22V57L44 70V35Z" fill="#709e80"/><path d="M44 35L67 22V57L44 70Z" fill="#477a61"/><path d="M29 28V54M35 32V57" stroke="#d3edce" stroke-opacity=".55" stroke-width="3"/><path d="M48 42L62 34V43L48 51Z" fill="#213d32"/>
+                <g class="drill"><path d="M42 4V23" stroke="#dfbd75" stroke-width="6"/><path d="M36 7L48 13M36 15L48 21" stroke="#445146" stroke-width="3"/></g><path d="M54 66L70 56 79 62 63 73Z" fill="#d0ab70"/>
+              </symbol>
+              <symbol id="building-SMELTER" viewBox="0 0 88 100">
+                <ellipse cx="44" cy="85" rx="37" ry="12" fill="#0b1317" opacity=".5"/><path d="M8 65L44 45 80 65 44 86Z" fill="#716156"/><path d="M8 65V76L44 97V86Z" fill="#493b36"/><path d="M44 86L80 65V76L44 97Z" fill="#61483c"/>
+                <path d="M20 38L45 24 70 38 45 53Z" fill="#db9362"/><path d="M20 38V67L45 82V53Z" fill="#b97048"/><path d="M45 53L70 38V67L45 82Z" fill="#87523c"/><path d="M28 49L40 56V72L28 65Z" fill="#3f3029"/><path class="furnace" d="M30 55L38 60V68L30 63Z" fill="#ffc07c"/>
+                <path d="M50 13L59 8 67 13 58 18Z" fill="#8d9291"/><path d="M50 13V38L58 43V18Z" fill="#72777a"/><path d="M58 18L67 13V38L58 43Z" fill="#4c585c"/><path d="M51 30L66 21" stroke="#b3b7ac" stroke-width="3"/><circle class="smoke s1" cx="59" cy="3" r="5" fill="#b0aaa0" opacity=".2"/>
+              </symbol>
+              <symbol id="building-PRESS" viewBox="0 0 88 100">
+                <ellipse cx="44" cy="85" rx="37" ry="12" fill="#0b1317" opacity=".5"/><path d="M8 65L44 45 80 65 44 86Z" fill="#566a75"/><path d="M8 65V76L44 97V86Z" fill="#344754"/><path d="M44 86L80 65V76L44 97Z" fill="#415e70"/>
+                <path d="M20 26L43 13 68 27 45 40Z" fill="#99bed2"/><path d="M20 26V68L29 73V39L45 49V40Z" fill="#638ea7"/><path d="M45 40L68 27V69L58 75V43L45 50Z" fill="#436f8b"/>
+                <g class="press-head"><path d="M29 47L44 39 59 47 44 56Z" fill="#c6dbe2"/><path d="M29 47V57L44 65V56Z" fill="#83a5b5"/><path d="M44 56L59 47V57L44 65Z" fill="#577885"/></g><path d="M32 75L45 67 59 75 46 83Z" fill="#d7e0dd"/>
+              </symbol>
+              <symbol id="building-WAREHOUSE" viewBox="0 0 88 100">
+                <ellipse cx="44" cy="85" rx="37" ry="12" fill="#0b1317" opacity=".5"/><path d="M9 57L45 37 80 57V76L45 97 9 76Z" fill="#71674f"/><path d="M9 57L45 78 80 57 45 36Z" fill="#e2c78d"/><path d="M9 57V76L45 97V78Z" fill="#b99f71"/><path d="M45 78L80 57V76L45 97Z" fill="#8c7956"/>
+                <path d="M15 39L44 23 74 40 45 57Z" fill="#f0d59b"/><path d="M15 39V57L45 74V57Z" fill="#cfb786"/><path d="M45 57L74 40V58L45 74Z" fill="#ac946b"/><path d="M27 32L57 50V67M59 31L30 48V65" fill="none" stroke="#685e4f" stroke-width="5"/><path d="M20 47L28 52V58L20 54Z" fill="#3e4d49"/>
+              </symbol>
+            </defs>
+            <rect width="1000" height="610" fill="url(#ground-light)"/><rect x="68" y="75" width="864" height="448" fill="url(#ground-grid)"/>
+            <g id="terrain" opacity=".45"><path d="M78 290L95 276 119 287 113 307 90 315Z" fill="#5a6e70"/><path d="M106 318L120 308 133 320 124 335Z" fill="#7d8e89"/><path d="M85 329L99 321 112 340 94 350Z" fill="#647574"/><path d="M852 106L879 90 904 105 895 123 868 127Z" fill="#3b4d42"/><path d="M111 485L130 478 146 491 125 502Z" fill="#38483d"/></g>
+            <g id="cells"></g><g id="belts" pointer-events="none"></g><g id="particles" pointer-events="none"></g><g id="machines"></g>
+          </svg>
+          <div id="map-help" class="map-help">Выбери здание, чтобы увидеть, что происходит внутри.</div>
+          <div class="build-dock" aria-label="Построить здание"><span class="dock-label">ПОСТРОИТЬ</span><button data-build="MINE"><span class="mini ore">◆</span> Шахта <small>80 ◈</small></button><button data-build="SMELTER"><span class="mini ingot">▰</span> Плавильня <small>100 ◈</small></button><button data-build="PRESS"><span class="mini plate">▱</span> Пресс <small>120 ◈</small></button><button data-build="WAREHOUSE"><span class="mini budget">▥</span> Склад <small>60 ◈</small></button><button id="cancel-tool" class="cancel-tool" title="Отменить инструмент" hidden>✕</button></div>
+        </div>
+        <div class="map-footer"><span><i class="legend-dot green"></i> Производство <i class="legend-dot amber"></i> Ожидание</span><span>Руда → слитки → пластины <span class="tiny-separator">/</span> <b id="machine-count">3</b> здания</span></div>
+      </div>
+      <aside id="inspector" class="inspector" aria-label="Выбранное здание"></aside>
+    </section>
+    <section class="bottom-panels">
+      <div class="contract-panel"><div class="panel-heading"><span class="eyebrow">ГОРОДСКОЙ ЗАКАЗ № 001</span><span id="contract-status" class="pill">В работе</span></div><h2>Основа нового города</h2><p>Доставь <b>40 железных пластин</b> на склад №3<br>не позднее 100-го такта.</p><div class="contract-progress"><span id="contract-count">0 / 40</span><span id="contract-time">Осталось 100 тактов</span></div><div class="progress-track"><div id="contract-bar"></div></div><button id="submit" class="button secondary">Сдать заказ со склада №3 <span>↗</span></button><small id="contract-note">В песочнице можно тренироваться. Для зачёта запусти смену «Контракт».</small></div>
+      <div class="journal-panel"><div class="panel-heading"><span class="eyebrow">ЖУРНАЛ СМЕНЫ</span><span class="journal-live">● LIVE</span></div><ol id="events"></ol><div class="journal-note"><span>⌘</span><p>Завод работает по твоим правилам.<br><button id="open-workshop-bottom" class="inline-button">Заглянуть в мастерскую →</button></p></div></div>
+    </section>
+    <footer class="page-footer"><span>JAVAPOLIS FACTORY / 01</span><span>Сделано из руды, Java и пары хороших идей.</span><span>Локально. На твоей машине.</span></footer>
+  </main>
+  <div id="toast" role="status" aria-live="polite" hidden></div>
+  <dialog id="workshop"><div class="dialog-heading"><div><div class="eyebrow">ТВОЯ МАСТЕРСКАЯ</div><h2>Пять шагов до работающего завода</h2></div><button class="icon-button" data-close="workshop" aria-label="Закрыть">✕</button></div><p class="muted">Меняй классы в <code>src/main/java/javapolis/factory/student</code>, проверяй этап и перезапускай приложение. Графика и сервер уже готовы.</p><div class="lesson-list"><article><b>01</b><div><h3>Склад, который держит слово</h3><p><code>Inventory.java</code> — добавление и списание ресурсов. Выбери плавильню и нажми «Учебная поставка».</p><code>./mvnw -Pstage-1 test</code></div></article><article><b>02</b><div><h3>Первая руда</h3><p><code>Mining.java</code> — одна руда за такт, пауза и полный выход.</p><code>./mvnw -Pstage-2 test</code></div></article><article><b>03</b><div><h3>Разжигаем плавильню</h3><p><code>Processing.java</code> — рецепт, ожидание сырья и завершение партии.</p><code>./mvnw -Pstage-3 test</code></div></article><article><b>04</b><div><h3>Рецепт вместо копипасты</h3><p><code>Recipes.java</code> — добавь пресс: 3 слитка → 2 пластины за 3 такта.</p><code>./mvnw -Pstage-4 test</code></div></article><article><b>05</b><div><h3>Первый контракт</h3><p><code>Contract.java</code> — сдай 40 пластин до 100-го такта. Одной плавильни мало — перестрой линию.</p><code>./mvnw -Pstage-5 test</code></div></article></div><div class="notice">В Windows используй <code>mvnw.cmd</code> вместо <code>./mvnw</code>. Зелёный обычный <code>test</code> проверяет обвязку; для своих заданий выбирай профиль этапа. Полный курс — в папке <code>lessons</code> скачанного архива.</div><p class="muted">Хочешь сначала увидеть готовый завод? Останови приложение и запусти <code>./mvnw -Psolution spring-boot:run</code>. На экране появится метка «Эталон». Вернись к своей версии командой <code>./mvnw spring-boot:run</code>.</p></dialog>
+  <dialog id="shift-dialog"><div class="dialog-heading"><h2>Новая смена</h2><button class="icon-button" data-close="shift-dialog" aria-label="Закрыть">✕</button></div><p class="muted">Карта, запасы и время сбросятся. Твой Java-код останется на месте.</p><button class="scenario-choice" data-scenario="sandbox"><b>Песочница <span>↗</span></b><small>Без ограничения времени. Учебные поставки для проверки склада.</small></button><button class="scenario-choice" data-scenario="contract"><b>Контракт <span>↗</span></b><small>40 пластин / 100 тактов / 300 кредитов. Ресурсы добываются только твоим заводом.</small></button></dialog>
+</body>
+</html>

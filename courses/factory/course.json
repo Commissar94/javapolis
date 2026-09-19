@@ -1,0 +1,143 @@
+{
+  "title": "Завод 1 — от руды до первого контракта",
+  "language": "ru",
+  "java": 21,
+  "stages": 5,
+  "player": "courses/factory/starter",
+  "reusedTopics": [
+    "classes.md",
+    "advanced/collections.md",
+    "Колизей/4_Переменные.md",
+    "Колизей/8_Сравнения и логика.md",
+    "Колизей/9_Условия.md",
+    "Колизей/20_Цикл for.md",
+    "Колизей/21_Простые методы.md",
+    "Колизей/22_Параметры и return.md"
+  ],
+  "chapters": [
+    {
+      "number": 1,
+      "filename": "1_О курсе.md",
+      "title": "Завод 1. От руды до первого контракта",
+      "stage": 1,
+      "kind": "theory"
+    },
+    {
+      "number": 2,
+      "filename": "2_Локальная мастерская.md",
+      "title": "Локальная мастерская",
+      "stage": 1,
+      "kind": "theory"
+    },
+    {
+      "number": 3,
+      "filename": "3_Перечисления ресурсов.md",
+      "title": "Перечисления ресурсов",
+      "stage": 1,
+      "kind": "theory"
+    },
+    {
+      "number": 4,
+      "filename": "4_Инкапсуляция и инварианты.md",
+      "title": "Инкапсуляция и инварианты",
+      "stage": 1,
+      "kind": "theory"
+    },
+    {
+      "number": 5,
+      "filename": "5_Этап 1 Склад.md",
+      "title": "Этап 1. Склад без чёрной дыры",
+      "stage": 1,
+      "kind": "practice",
+      "studentClass": "Inventory"
+    },
+    {
+      "number": 6,
+      "filename": "6_Состояния и такты.md",
+      "title": "Состояния и такты",
+      "stage": 2,
+      "kind": "theory"
+    },
+    {
+      "number": 7,
+      "filename": "7_Этап 2 Добыча.md",
+      "title": "Этап 2. Шахта выходит на смену",
+      "stage": 2,
+      "kind": "practice",
+      "studentClass": "Mining"
+    },
+    {
+      "number": 8,
+      "filename": "8_Композиция и ссылки.md",
+      "title": "Композиция и ссылки",
+      "stage": 3,
+      "kind": "theory"
+    },
+    {
+      "number": 9,
+      "filename": "9_Рецепт и завершение партии.md",
+      "title": "Рецепт и завершение партии",
+      "stage": 3,
+      "kind": "theory"
+    },
+    {
+      "number": 10,
+      "filename": "10_Этап 3 Плавильня.md",
+      "title": "Этап 3. Первый слиток",
+      "stage": 3,
+      "kind": "practice",
+      "studentClass": "Processing"
+    },
+    {
+      "number": 11,
+      "filename": "11_Данные вместо копирования.md",
+      "title": "Данные вместо копирования",
+      "stage": 4,
+      "kind": "theory"
+    },
+    {
+      "number": 12,
+      "filename": "12_Этап 4 Пресс.md",
+      "title": "Этап 4. Из слитков в пластины",
+      "stage": 4,
+      "kind": "practice",
+      "studentClass": "Recipes"
+    },
+    {
+      "number": 13,
+      "filename": "13_JUnit первая проверка.md",
+      "title": "JUnit. Проверяем без гадания",
+      "stage": 5,
+      "kind": "theory"
+    },
+    {
+      "number": 14,
+      "filename": "14_Границы и отрицательные сценарии.md",
+      "title": "Границы и отрицательные сценарии",
+      "stage": 5,
+      "kind": "theory"
+    },
+    {
+      "number": 15,
+      "filename": "15_Этап 5 Контракт.md",
+      "title": "Этап 5. Заказчик ждёт",
+      "stage": 5,
+      "kind": "practice",
+      "studentClass": "Contract"
+    },
+    {
+      "number": 16,
+      "filename": "16_Балансировка линии.md",
+      "title": "Балансировка линии",
+      "stage": 5,
+      "kind": "theory"
+    },
+    {
+      "number": 17,
+      "filename": "17_Финиш и продолжение.md",
+      "title": "Смена закрыта. Что ты построил",
+      "stage": 5,
+      "kind": "theory"
+    }
+  ]
+}
