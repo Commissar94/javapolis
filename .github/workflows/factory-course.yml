@@ -24,8 +24,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
@@ -37,8 +37,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
@@ -47,17 +47,19 @@ jobs:
       - name: Package the independent student project and offline lessons using Java
         run: java courses/factory/tools/PackagePlayer.java
       - name: Extract the exact student distribution
-        run: unzip -q target/factory-player.zip -d target/distribution
+        run: |
+          unzip -q target/factory-player.zip -d target/distribution
+          chmod +x target/distribution/factory-player/mvnw
       - name: Verify the starter shell from the distribution
         working-directory: target/distribution/factory-player
-        run: bash mvnw -B -ntp test
+        run: ./mvnw -B -ntp test
       - name: Verify all reference exercises and package the local app
         working-directory: target/distribution/factory-player
-        run: bash mvnw -B -ntp -Psolution verify
+        run: ./mvnw -B -ntp -Psolution verify
       - name: Ensure the reference build cannot make an unsolved starter pass
         working-directory: target/distribution/factory-player
         run: |
-          if bash mvnw -B -ntp -Pstage-1 test > stage-1.log 2>&1; then
+          if ./mvnw -B -ntp -Pstage-1 test > stage-1.log 2>&1; then
             cat stage-1.log
             exit 1
           fi
@@ -78,8 +80,8 @@ jobs:
       run:
         working-directory: courses/factory/starter
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
@@ -97,8 +99,8 @@ jobs:
       run:
         working-directory: courses/factory/starter
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '21'
