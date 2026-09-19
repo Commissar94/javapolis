@@ -1,0 +1,120 @@
+name: Factory course and local player
+
+on:
+  pull_request:
+    paths:
+      - 'courses/factory/**'
+      - 'src/**'
+      - 'pom.xml'
+      - '.github/workflows/factory-course.yml'
+  push:
+    branches: [master]
+    paths:
+      - 'courses/factory/**'
+      - 'src/**'
+      - 'pom.xml'
+      - '.github/workflows/factory-course.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  course:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Validate chapters and execute published Java and JUnit examples
+        run: mvn -B -ntp -Dskip.installnodenpm -Dskip.npm -Dtest=FactoryCourseTest test
+
+  player:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: courses/factory/starter/pom.xml
+      - name: Package the independent student project and offline lessons using Java
+        run: java courses/factory/tools/PackagePlayer.java
+      - name: Extract the exact student distribution
+        run: |
+          unzip -q target/factory-player.zip -d target/distribution
+          chmod +x target/distribution/factory-player/mvnw
+      - name: Verify the starter shell from the distribution
+        working-directory: target/distribution/factory-player
+        run: ./mvnw -B -ntp test
+      - name: Verify all reference exercises and package the local app
+        working-directory: target/distribution/factory-player
+        run: ./mvnw -B -ntp -Psolution verify
+      - name: Ensure the reference build cannot make an unsolved starter pass
+        working-directory: target/distribution/factory-player
+        run: |
+          if ./mvnw -B -ntp -Pstage-1 test > stage-1.log 2>&1; then
+            cat stage-1.log
+            exit 1
+          fi
+          cat stage-1.log
+          grep -q 'Failures: [1-9]' stage-1.log
+          grep -q 'Stage1InventoryTest' stage-1.log
+      - uses: actions/upload-artifact@v4
+        with:
+          name: factory-player
+          path: target/factory-player.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: courses/factory/starter
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: courses/factory/starter/pom.xml
+      - name: Verify Windows wrapper and starter shell
+        run: .\mvnw.cmd -B -ntp test
+      - name: Verify all reference exercises on Windows
+        run: .\mvnw.cmd -B -ntp -Psolution test
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: courses/factory/starter
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: courses/factory/starter/pom.xml
+      - name: Install Chromium through Playwright Java
+        run: ./mvnw -B -ntp -Psolution,ui test-compile exec:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.classpathScope=test -Dexec.args="install --with-deps chromium"
+      - name: Exercise the real browser game with Java and JUnit
+        run: ./mvnw -B -ntp -Psolution,ui test
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: factory-browser-checks
+          path: |
+            courses/factory/starter/target/solution/ui-screenshots
+            courses/factory/starter/target/solution/surefire-reports
+          retention-days: 30
